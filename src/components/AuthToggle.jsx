@@ -1,8 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-const AuthToggle = ({ onLogin }) => {
+const AuthToggle = ({ onLogin, onBack, isDarkMode, toggleTheme }) => {
   const [isLogin, setIsLogin] = useState(true)
-  const [isDarkMode, setIsDarkMode] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -10,12 +9,18 @@ const AuthToggle = ({ onLogin }) => {
     confirmPassword: ''
   })
 
+  // Set data-theme attribute when component mounts or isDarkMode changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     })
   }
+  
   const handleSubmit = (e) => {
     e.preventDefault()
     if (isLogin) {
@@ -26,7 +31,6 @@ const AuthToggle = ({ onLogin }) => {
       alert('Registrasi berhasil! (Demo)')
     }
   }
-
   const resetForm = () => {
     setFormData({
       email: '',
@@ -40,37 +44,31 @@ const AuthToggle = ({ onLogin }) => {
     setIsLogin(!isLogin)
     resetForm()
   }
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
-  }
-
   return (
-    <div className={`min-h-screen w-full transition-all duration-500 ${
-      isDarkMode 
-        ? 'bg-gradient-to-br from-gray-900 via-red-900 to-black' 
-        : 'bg-gradient-to-br from-red-50 via-rose-50 to-pink-100'
-    }`}>
-      {/* Theme Toggle Button */}
-      <div className="absolute top-4 right-4 z-10">
-        <button
-          onClick={toggleTheme}
-          className={`p-3 rounded-full transition-all duration-300 ${
-            isDarkMode
-              ? 'bg-gray-800 text-yellow-400 hover:bg-gray-700'
-              : 'bg-white text-gray-600 hover:bg-gray-100'
-          } shadow-lg`}
-        >
-          {isDarkMode ? (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    <div className="min-h-screen bg-base-200 transition-colors duration-300">
+      {/* Header with Back Button and Theme Toggle */}
+      <div className="absolute top-4 left-4 right-4 z-10 flex justify-between">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="btn btn-ghost btn-circle"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-          ) : (
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
+          </button>
+        )}
+        <div className="flex space-x-2">
+          <div className="badge badge-primary">Mode Login</div>
+          {toggleTheme && (
+            <button
+              onClick={toggleTheme}
+              className="btn btn-ghost btn-circle"
+            >
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Main Content Container */}

@@ -10,53 +10,42 @@
 // - loading
 // Documentation: https://daisyui.com/
 
-import React from 'react'
+import React, { useEffect } from 'react'
 
 function Home({ toggleTheme, isDarkMode, onLogout }) {
+  // Set data-theme attribute on mount and when isDarkMode changes
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'
-    }`}>
+    <div className="min-h-screen bg-base-200 transition-colors duration-300">
       {/* Header */}
-      <header className={`shadow-lg ${
-        isDarkMode ? 'bg-gray-800' : 'bg-white'
-      }`}>
+      <header className="bg-base-100 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold">E-PERSMIP</h1>
+            <h1 className="text-3xl font-bold text-base-content">E-PERSMIP</h1>
             <div className="flex items-center space-x-4">
               <button
                 onClick={toggleTheme}
-                className={`p-2 rounded-lg transition-colors duration-200 ${
-                  isDarkMode
-                    ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                }`}
+                className="btn btn-ghost btn-circle"
               >
                 {isDarkMode ? '☀️' : '🌙'}
               </button>
               <button 
                 onClick={onLogout}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
-                  isDarkMode
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-red-500 hover:bg-red-600 text-white'
-                }`}>
+                className="btn btn-error btn-sm">
                 Logout
               </button>
             </div>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
+      </header>      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className={`rounded-lg p-6 mb-8 ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
-        } shadow-lg`}>
-          <h2 className="text-2xl font-bold mb-4">Welcome to E-PERSMIP Dashboard</h2>
-          <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <div className="bg-base-100 rounded-lg p-6 mb-8 shadow-lg">
+          <h2 className="text-2xl font-bold mb-4 text-base-content">Welcome to E-PERSMIP Dashboard</h2>
+          <p className="text-lg text-base-content opacity-70">
             Sistem Elektronik Peminjaman Perpustakaan MIPA Universitas Hasanuddin
           </p>
         </div>
@@ -106,16 +95,14 @@ function Home({ toggleTheme, isDarkMode, onLogout }) {
             <div className="stat-value text-warning">12</div>
             <div className="stat-desc">Perlu dikembalikan</div>
           </div>
-        </div>
-
-        {/* Quick Actions - Using DaisyUI Cards */}
+        </div>        {/* Quick Actions - Using DaisyUI Cards */}
         <div className="mb-8">
-          <h3 className="text-xl font-bold mb-4">Quick Actions</h3>
+          <h3 className="text-xl font-bold mb-4 text-base-content">Quick Actions</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <div className="card-body">
-                <h2 className="card-title">📚 Pinjam Buku</h2>
-                <p>Pinjam buku dari koleksi perpustakaan</p>
+                <h2 className="card-title text-base-content">📚 Pinjam Buku</h2>
+                <p className="text-base-content opacity-70">Pinjam buku dari koleksi perpustakaan</p>
                 <div className="card-actions justify-end">
                   <button className="btn btn-primary">Pinjam</button>
                 </div>
@@ -124,8 +111,8 @@ function Home({ toggleTheme, isDarkMode, onLogout }) {
             
             <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <div className="card-body">
-                <h2 className="card-title">🔍 Cari Buku</h2>
-                <p>Cari dan browse katalog buku tersedia</p>
+                <h2 className="card-title text-base-content">🔍 Cari Buku</h2>
+                <p className="text-base-content opacity-70">Cari dan browse katalog buku tersedia</p>
                 <div className="card-actions justify-end">
                   <button className="btn btn-secondary">Cari</button>
                 </div>
@@ -134,51 +121,41 @@ function Home({ toggleTheme, isDarkMode, onLogout }) {
             
             <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow duration-300">
               <div className="card-body">
-                <h2 className="card-title">📋 Riwayat Peminjaman</h2>
-                <p>Lihat riwayat dan status peminjaman</p>
+                <h2 className="card-title text-base-content">📋 Riwayat Peminjaman</h2>
+                <p className="text-base-content opacity-70">Lihat riwayat dan status peminjaman</p>
                 <div className="card-actions justify-end">
                   <button className="btn btn-accent">Lihat</button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className={`rounded-lg p-6 ${
-          isDarkMode ? 'bg-gray-800' : 'bg-white'
-        } shadow-lg`}>
-          <h3 className="text-xl font-bold mb-4">Recent Activity</h3>
+        </div>        {/* Recent Activity */}
+        <div className="bg-base-100 rounded-lg p-6 shadow-lg">
+          <h3 className="text-xl font-bold mb-4 text-base-content">Recent Activity</h3>
           <div className="space-y-4">
-            <div className={`flex items-center p-3 rounded-lg ${
-              isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-            }`}>
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+            <div className="flex items-center p-3 rounded-lg bg-base-200">
+              <div className="w-2 h-2 bg-success rounded-full mr-3"></div>
               <div>
-                <p className="font-medium">Buku "Algoritma dan Struktur Data" dikembalikan</p>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <p className="font-medium text-base-content">Buku "Algoritma dan Struktur Data" dikembalikan</p>
+                <p className="text-sm text-base-content opacity-60">
                   2 hours ago
                 </p>
               </div>
             </div>
-            <div className={`flex items-center p-3 rounded-lg ${
-              isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-            }`}>
-              <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+            <div className="flex items-center p-3 rounded-lg bg-base-200">
+              <div className="w-2 h-2 bg-info rounded-full mr-3"></div>
               <div>
-                <p className="font-medium">Buku baru "Machine Learning" ditambahkan</p>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <p className="font-medium text-base-content">Buku baru "Machine Learning" ditambahkan</p>
+                <p className="text-sm text-base-content opacity-60">
                   5 hours ago
                 </p>
               </div>
             </div>
-            <div className={`flex items-center p-3 rounded-lg ${
-              isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-            }`}>
-              <div className="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+            <div className="flex items-center p-3 rounded-lg bg-base-200">
+              <div className="w-2 h-2 bg-warning rounded-full mr-3"></div>
               <div>
-                <p className="font-medium">Pengingat: 3 buku akan jatuh tempo besok</p>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                <p className="font-medium text-base-content">Pengingat: 3 buku akan jatuh tempo besok</p>
+                <p className="text-sm text-base-content opacity-60">
                   1 day ago
                 </p>
               </div>
