@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const AuthToggle = () => {
+const AuthToggle = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [formData, setFormData] = useState({
@@ -16,12 +16,11 @@ const AuthToggle = () => {
       [e.target.name]: e.target.value
     })
   }
-
   const handleSubmit = (e) => {
     e.preventDefault()
     if (isLogin) {
       console.log('Login:', { email: formData.email, password: formData.password })
-      alert('Login berhasil! (Demo)')
+      onLogin() // Call the onLogin function to authenticate the user
     } else {
       console.log('Register:', formData)
       alert('Registrasi berhasil! (Demo)')
