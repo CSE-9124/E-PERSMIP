@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import unhsLogo from '../assets/unhas-logo.png'
 
 const AuthToggle = ({ onLogin, onBack, isDarkMode, toggleTheme }) => {
   const [isLogin, setIsLogin] = useState(true)
@@ -76,14 +77,16 @@ const AuthToggle = ({ onLogin, onBack, isDarkMode, toggleTheme }) => {
         <div className="w-full max-w-md space-y-8">
           {/* Logo and Header */}
           <div className="text-center">
-            <div className={`mx-auto h-20 w-20 flex items-center justify-center rounded-full shadow-2xl transition-all duration-300 ${
+            <div className={`mx-auto h-24 w-24 flex items-center justify-center rounded-full shadow-2xl transition-all duration-300 ${
               isDarkMode
                 ? 'bg-gradient-to-r from-red-600 to-pink-600'
                 : 'bg-gradient-to-r from-red-500 to-rose-500'
             }`}>
-              <svg className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
+              <img 
+                src={unhsLogo} 
+                alt="Universitas Hasanuddin Logo" 
+                className="h-20 w-20 object-contain"
+              />
             </div>
             <h1 className={`mt-6 text-4xl font-extrabold transition-colors duration-300 ${
               isDarkMode ? 'text-white' : 'text-gray-900'
@@ -94,6 +97,11 @@ const AuthToggle = ({ onLogin, onBack, isDarkMode, toggleTheme }) => {
               isDarkMode ? 'text-gray-300' : 'text-gray-600'
             }`}>
               {isLogin ? 'Sistem Elektronik Perizinan dan Pelaporan Simpang' : 'Buat akun baru untuk mengakses sistem'}
+            </p>
+            <p className={`mt-2 text-sm font-medium transition-colors duration-300 ${
+              isDarkMode ? 'text-red-400' : 'text-red-600'
+            }`}>
+              Universitas Hasanuddin
             </p>
           </div>
 

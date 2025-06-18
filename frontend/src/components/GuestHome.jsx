@@ -1,5 +1,6 @@
 // Guest mode for E-PERSMIP - Limited access without login
 import React, { useEffect } from 'react'
+import unhasLogo from '../assets/unhas-logo.png'
 
 function GuestHome({ toggleTheme, isDarkMode, onLogin }) {
   // Set data-theme attribute on mount and when isDarkMode changes
@@ -14,10 +15,19 @@ function GuestHome({ toggleTheme, isDarkMode, onLogin }) {
 
   return (
     <div className="min-h-screen bg-base-200 transition-colors duration-300">      {/* Header */}
-      <header className="bg-base-100 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="bg-base-100 shadow-lg">        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-base-content">E-PERSMIP</h1>
+            <div className="flex items-center space-x-4">
+              <img 
+                src={unhasLogo} 
+                alt="Universitas Hasanuddin Logo" 
+                className="h-12 w-12 object-contain"
+              />
+              <div>
+                <h1 className="text-3xl font-bold text-base-content">E-PERSMIP</h1>
+                <p className="text-sm text-base-content opacity-60">Universitas Hasanuddin</p>
+              </div>
+            </div>
             <div className="flex items-center space-x-4">
               <button
                 onClick={toggleTheme}
