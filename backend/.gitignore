@@ -1,0 +1,72 @@
+# ####################
+# Virtual Environments
+# ####################
+# Abaikan folder virtual environment Python
+venv/
+.venv/
+env/
+.env/
+
+# ####################
+# File Konfigurasi & Rahasia
+# ####################
+# Abaikan file environment yang berisi kunci rahasia dan kredensial
+.env
+*.env.local
+
+# ####################
+# File Database
+# ####################
+*.sqlite
+*.sqlite3
+
+# ####################
+# Cache & Bytecode Python
+# ####################
+# Abaikan folder cache yang dibuat otomatis oleh Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ####################
+# Konfigurasi IDE/Editor
+# ####################
+# Visual Studio Code
+.vscode/
+# PyCharm
+.idea/
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ####################
+# File Spesifik Sistem Operasi
+# ####################
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+
+# ####################
+# Artefak Build & Distribusi
+# ####################
+# File yang dihasilkan saat membangun paket Python
+dist/
+build/
+*.egg-info/
+*.egg
+
+# ####################
+# Log & File Sementara
+# ####################
+*.log
+*.tmp
+
+# ####################
+# Artefak Testing
+# ####################
+# File yang dihasilkan oleh alat testing seperti pytest dan coverage
+.pytest_cache/
+.coverage
+htmlcov/
