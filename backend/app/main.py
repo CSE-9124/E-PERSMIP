@@ -13,10 +13,10 @@ app = FastAPI(
 )
 
 # Konfigurasi CORS (Cross-Origin Resource Sharing)
-# Mengizinkan frontend React (localhost:3000) untuk mengakses API ini
+# Mengizinkan frontend React (localhost:5173) untuk mengakses API ini
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

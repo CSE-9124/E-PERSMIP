@@ -8,7 +8,7 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
+    email: Optional[str] = None
 
 # --- Skema untuk Author & Category ---
 class Author(BaseModel):
@@ -23,17 +23,17 @@ class Category(BaseModel):
 
 # --- Skema untuk User ---
 class UserBase(BaseModel):
-    username: str
-    student_name: str
+    email: str
+    full_name: str
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
 
 # Skema untuk menampilkan info user di dalam response lain (misal: review)
 class UserInResponse(BaseModel):
     id: int
-    username: str
-    student_name: str
+    email: str
+    full_name: str
     class Config:
         orm_mode = True
 
@@ -46,7 +46,6 @@ class User(UserBase):
 
 # --- Skema untuk Review ---
 class ReviewBase(BaseModel):
-    title: str
     review_score: float = Field(..., ge=1, le=5) # Skor antara 1 dan 5
     review_text: Optional[str] = None
 
@@ -61,32 +60,47 @@ class Review(ReviewBase):
         orm_mode = True
 
 # --- Skema untuk Book ---
+# Base model: hanya berisi field yang sama di semua variasi, TANPA id.
 class BookBase(BaseModel):
-    id: int
     title: str
     description: Optional[str]
-    image: Optional[str]
+    amount: int = Field(..., ge=0)
     publisher: Optional[str]
     published_date: Optional[str]
-    info_link: Optional[str]
-    price: Optional[float]
     rating: Optional[float]
+    image: Optional[str]
 
-# Skema untuk menampilkan daftar buku (lebih ringkas)
+# Skema untuk membuat buku baru (digunakan di POST oleh admin)
+class BookCreate(BookBase):
+    authors: List[str] = []
+    categories: List[str] = []
+
+# Skema untuk memperbarui buku (digunakan di PUT oleh admin)
+class BookUpdate(BaseModel):
+    # Buat semua field opsional untuk update
+    title: Optional[str] = None
+    description: Optional[str] = None
+    amount: Optional[int] = Field(None, ge=0)
+    publisher: Optional[str] = None
+    published_date: Optional[str] = None
+    image: Optional[str] = None
+
+# Skema untuk response API (GET) yang menampilkan daftar ringkas
 class BookInList(BaseModel):
     id: int
     title: str
     image: Optional[str]
-    rating: Optional[float]
+    amount: int
     authors: List[Author] = []
     class Config:
         orm_mode = True
 
-# Skema untuk menampilkan detail lengkap sebuah buku
+# Skema untuk response API (GET) yang menampilkan detail lengkap
 class Book(BookBase):
+    id: int
     authors: List[Author] = []
     categories: List[Category] = []
-    reviews: List[Review] = [] # Menampilkan daftar review buku
+    reviews: List[Review] = []
     class Config:
         orm_mode = True
 

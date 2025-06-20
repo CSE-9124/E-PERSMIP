@@ -20,8 +20,8 @@ book_categories_table = Table('book_categories', Base.metadata,
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    student_name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    full_name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(Enum("user", "admin", name="role_enum"), default="user")
     
@@ -42,14 +42,13 @@ class Category(Base):
 
 class Book(Base):
     __tablename__ = "books"
-    id = Column(Integer, primary_key=True, autoincrement=False)
+    id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
+    amount = Column(Integer, nullable=False, default=1)
     description = Column(Text, nullable=True)
     image = Column(String, nullable=True)
     publisher = Column(String, nullable=True)
     published_date = Column(String, nullable=True)
-    info_link = Column(String, nullable=True)
-    price = Column(Float, nullable=True)
     rating = Column(Float, nullable=True)
     authors = relationship("Author", secondary=book_authors_table, back_populates="books")
     categories = relationship("Category", secondary=book_categories_table, back_populates="books")
@@ -61,7 +60,6 @@ class Review(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
-    title = Column(String, nullable=False)
     review_score = Column(Float, nullable=False)
     review_text = Column(Text, nullable=True)
     
