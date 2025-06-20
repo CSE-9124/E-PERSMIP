@@ -6,8 +6,8 @@ from .core.security import get_password_hash
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
-def get_user_by_username(db: Session, username: str):
-    return db.query(models.User).filter(models.User.username == username).first()
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
@@ -15,8 +15,8 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = get_password_hash(user.password)
     db_user = models.User(
-        username=user.username,
-        student_name=user.student_name,
+        email=user.email,
+        full_name=user.full_name,
         hashed_password=hashed_password
     )
     db.add(db_user)
@@ -24,12 +24,60 @@ def create_user(db: Session, user: schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
-# --- Book CRUD ---
-def get_book(db: Session, book_id: int):
+# --- Book, Author, Category CRUD ---
+def get_book(db: Session, book_id: int) -> Optional[models.Book]:
     return db.query(models.Book).filter(models.Book.id == book_id).first()
 
-def get_books(db: Session, skip: int = 0, limit: int = 100):
+def get_books(db: Session, skip: int = 0, limit: int = 100) -> List[models.Book]:
     return db.query(models.Book).offset(skip).limit(limit).all()
+
+def create_book(db: Session, book: schemas.BookCreate) -> models.Book:
+    # 1. Menyiapkan data buku dasar
+    book_data = book.dict(exclude={"authors", "categories"})
+    db_book = models.Book(**book_data)
+
+    # 2. Mengelola Penulis (Author)
+    author_objects = []
+    for name in book.authors:
+        db_author = db.query(models.Author).filter(models.Author.name == name).first()
+        if not db_author:
+            db_author = models.Author(name=name)
+            db.add(db_author)
+        author_objects.append(db_author)
+    db_book.authors = author_objects
+
+    # 3. Mengelola Kategori
+    category_objects = []
+    for name in book.categories:
+        db_category = db.query(models.Category).filter(models.Category.name == name).first()
+        if not db_category:
+            db_category = models.Category(name=name)
+            db.add(db_category)
+        category_objects.append(db_category)
+    db_book.categories = category_objects
+    
+    # 4. Menyimpan ke database
+    db.add(db_book)
+    db.commit()
+    db.refresh(db_book)
+    return db_book
+
+def update_book(db: Session, db_book: models.Book, book_in: schemas.BookUpdate) -> models.Book:
+    update_data = book_in.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_book, key, value)
+    
+    db.add(db_book)
+    db.commit()
+    db.refresh(db_book)
+    return db_book
+
+def delete_book(db: Session, book_id: int) -> Optional[models.Book]:
+    db_book = db.query(models.Book).filter(models.Book.id == book_id).first()
+    if db_book:
+        db.delete(db_book)
+        db.commit()
+    return db_book
 
 # --- Review CRUD ---
 def create_review(db: Session, review: schemas.ReviewCreate, user_id: int, book_id: int):
@@ -55,26 +103,29 @@ def get_reviews_for_book(db: Session, book_id: int, skip: int = 0, limit: int = 
     return db.query(models.Review).filter(models.Review.book_id == book_id).offset(skip).limit(limit).all()
 
 # --- Borrow CRUD ---
-def create_borrow(db: Session, book_id: int, user_id: int):
-    # Cek apakah user sudah punya pinjaman aktif lain
+def create_borrow(db: Session, buku_id: int, user_id: int):
+    # Pengecekan 1: Pastikan user tidak punya pinjaman aktif lain
     user_active_borrow = db.query(models.Borrow).filter(
-        models.Borrow.user_id == user_id,
+        models.Borrow.peminjam_id == user_id,
         models.Borrow.status == 'dipinjam'
     ).first()
     if user_active_borrow:
         return {"error": "user_has_active_borrow"}
 
-    # Cek apakah buku tersedia
-    book_active_borrow = db.query(models.Borrow).filter(
-        models.Borrow.book_id == book_id,
-        models.Borrow.status == 'dipinjam'
-    ).first()
-    if book_active_borrow:
-        return {"error": "book_not_available"}
+    # Pengecekan 2: Pastikan buku ada dan stoknya tersedia
+    db_book = get_book(db, book_id=buku_id)
+    if not db_book:
+        return {"error": "book_not_found"}
+    if db_book.amount <= 0:
+        return {"error": "book_out_of_stock"}
 
-    db_borrow = models.Borrow(book_id=book_id, user_id=user_id)
+    db_book.amount -= 1
+    
+    # Buat record peminjaman
+    db_borrow = models.Borrow(buku_id=buku_id, peminjam_id=user_id)
     db.add(db_borrow)
-    db.commit()
+    
+    db.commit() # Simpan perubahan stok dan record peminjaman baru
     db.refresh(db_borrow)
     return db_borrow
 
@@ -84,12 +135,16 @@ def return_book(db: Session, borrow_id: int, user_id: int):
         models.Borrow.status == 'dipinjam'
     ).first()
     
-    # Cek apakah data peminjaman ada dan milik user yang benar
-    if not db_borrow or db_borrow.user_id != user_id:
+    if not db_borrow or db_borrow.peminjam_id != user_id:
         return None
 
+    db_book = get_book(db, book_id=db_borrow.buku_id)
+    if db_book:
+        db_book.amount += 1
+
     db_borrow.status = 'dikembalikan'
-    db.commit()
+    
+    db.commit() # Simpan perubahan stok dan status peminjaman
     db.refresh(db_borrow)
     return db_borrow
 
