@@ -35,15 +35,15 @@ def seed_data():
         # --- 1. Seed Users ---
         print("Memasukkan data Users dummy...")
         users_to_create = [
-            {"id": 1, "username": "admin", "student_name": "Administrator", "password": "adminpassword", "role": "admin"},
-            {"id": 2, "username": "budi", "student_name": "Budi Pekerti", "password": "userpassword", "role": "user"},
-            {"id": 3, "username": "citra", "student_name": "Citra Lestari", "password": "userpassword", "role": "user"}
+            {"id": 1, "email": "admin", "full_name": "Administrator", "password": "adminpassword", "role": "admin"},
+            {"id": 2, "email": "budi", "full_name": "Budi Pekerti", "password": "userpassword", "role": "user"},
+            {"id": 3, "email": "citra", "full_name": "Citra Lestari", "password": "userpassword", "role": "user"}
         ]
         for user_data in users_to_create:
             user = User(
                 id=user_data["id"],
-                username=user_data["username"],
-                student_name=user_data["student_name"],
+                email=user_data["email"],
+                full_name=user_data["full_name"],
                 hashed_password=get_password_hash(user_data["password"]),
                 role=user_data["role"]
             )
@@ -90,10 +90,9 @@ def seed_data():
                 pass
             
             book = Book(
-                id=row.get('id'), title=row.get('title'), description=row.get('description'),
+                title=row.get('title'), amount=row.get('amount'), description=row.get('description'),
                 image=row.get('image'), publisher=row.get('publisher'), published_date=row.get('published_date'),
-                info_link=row.get('info_link'), price=row.get('price'), rating=row.get('rating'),
-                authors=author_objects, categories=category_objects
+                rating=row.get('rating'),authors=author_objects, categories=category_objects
             )
             db.merge(book)
         
