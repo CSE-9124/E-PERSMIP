@@ -35,13 +35,11 @@ def seed_data():
         # --- 1. Seed Users ---
         print("Memasukkan data Users dummy...")
         users_to_create = [
-            {"id": 1, "email": "admin", "full_name": "Administrator", "password": "adminpassword", "role": "admin"},
-            {"id": 2, "email": "budi", "full_name": "Budi Pekerti", "password": "userpassword", "role": "user"},
-            {"id": 3, "email": "citra", "full_name": "Citra Lestari", "password": "userpassword", "role": "user"}
+            {"email": "admin@perpustakaan.com", "full_name": "Admin Satu", "password": "adminpassword", "role": "admin"},
+            {"email": "budi.pekerti@email.com", "full_name": "Budi Pekerti", "password": "userpassword", "role": "user"}
         ]
         for user_data in users_to_create:
             user = User(
-                id=user_data["id"],
                 email=user_data["email"],
                 full_name=user_data["full_name"],
                 hashed_password=get_password_hash(user_data["password"]),

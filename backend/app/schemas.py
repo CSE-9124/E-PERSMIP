@@ -10,17 +10,6 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     email: Optional[str] = None
 
-# --- Skema untuk Author & Category ---
-class Author(BaseModel):
-    name: str
-    class Config:
-        orm_mode = True
-
-class Category(BaseModel):
-    name: str
-    class Config:
-        orm_mode = True
-
 # --- Skema untuk User ---
 class UserBase(BaseModel):
     email: str
@@ -60,47 +49,44 @@ class Review(ReviewBase):
         orm_mode = True
 
 # --- Skema untuk Book ---
-# Base model: hanya berisi field yang sama di semua variasi, TANPA id.
+# Skema ini tidak akan digunakan langsung sebagai JSON body untuk endpoint create/update
+# tapi sebagai struktur data di dalam endpoint.
 class BookBase(BaseModel):
     title: str
     description: Optional[str]
     amount: int = Field(..., ge=0)
     publisher: Optional[str]
     published_date: Optional[str]
-    rating: Optional[float]
-    image: Optional[str]
 
-# Skema untuk membuat buku baru (digunakan di POST oleh admin)
 class BookCreate(BookBase):
+    # Tidak lagi butuh ID di sini, karena akan dibuat otomatis
     authors: List[str] = []
     categories: List[str] = []
 
-# Skema untuk memperbarui buku (digunakan di PUT oleh admin)
 class BookUpdate(BaseModel):
-    # Buat semua field opsional untuk update
+    # Semua field opsional saat update
     title: Optional[str] = None
     description: Optional[str] = None
     amount: Optional[int] = Field(None, ge=0)
     publisher: Optional[str] = None
     published_date: Optional[str] = None
-    image: Optional[str] = None
 
-# Skema untuk response API (GET) yang menampilkan daftar ringkas
-class BookInList(BaseModel):
+# Skema response, bisa menampilkan URL gambar lama
+class Book(BookBase):
     id: int
-    title: str
-    image: Optional[str]
-    amount: int
-    authors: List[Author] = []
+    image: Optional[str] # URL gambar
+    authors: List["Author"] = []
+    categories: List["Category"] = []
     class Config:
         orm_mode = True
 
-# Skema untuk response API (GET) yang menampilkan detail lengkap
-class Book(BookBase):
-    id: int
-    authors: List[Author] = []
-    categories: List[Category] = []
-    reviews: List[Review] = []
+class Author(BaseModel):
+    name: str
+    class Config:
+        orm_mode = True
+
+class Category(BaseModel):
+    name: str
     class Config:
         orm_mode = True
 

@@ -20,30 +20,63 @@ def read_book(book_id: int, db: Session = Depends(dependencies.get_db)):
 
 # Endpoint untuk menambah buku - HANYA ADMIN
 @router_books.post("/", response_model=schemas.Book, status_code=201)
-def create_book(book: schemas.BookCreate, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
+async def create_book(
+    db: Session = Depends(dependencies.get_db),
+    current_user: models.User = Depends(dependencies.require_admin_role),
+    # Data buku dikirim sebagai Form, bukan JSON
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
+    amount: int = Form(...),
+    publisher: Optional[str] = Form(None),
+    # Gambar diupload sebagai file
+    image: Optional[UploadFile] = File(None)
+):
     """
-    Membuat buku baru. Termasuk membuat author dan category baru jika belum ada.
+    Membuat buku baru dengan upload gambar (opsional).
+    Data dikirim sebagai multipart/form-data.
     """
-    # Pengecekan judul duplikat
-    db_book = db.query(models.Book).filter(models.Book.title == book.title).first()
-    if db_book:
-        raise HTTPException(status_code=400, detail="Book with this title already exists")
-    return crud.create_book(db=db, book=book)
+    image_bytes = await image.read() if image else None
+
+    # Buat objek Pydantic dari data form
+    book_in = schemas.BookCreate(
+        title=title,
+        description=description,
+        amount=amount,
+        publisher=publisher
+    )
+    
+    return crud.create_book(db=db, book=book_in, image_blob=image_bytes)
 
 # Endpoint untuk mengedit buku - HANYA ADMIN
 @router_books.put("/{book_id}", response_model=schemas.Book)
-def update_book(book_id: int, book: schemas.BookUpdate, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
-    """
-    Memperbarui data buku berdasarkan ID.
-    """
+async def update_book(
+    book_id: int,
+    db: Session = Depends(dependencies.get_db),
+    current_user: models.User = Depends(dependencies.require_admin_role),
+    # Data juga dikirim sebagai Form
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    amount: Optional[int] = Form(None),
+    publisher: Optional[str] = Form(None),
+    image: Optional[UploadFile] = File(None)
+):
     db_book = crud.get_book(db, book_id=book_id)
-    if db_book is None:
+    if not db_book:
         raise HTTPException(status_code=404, detail="Book not found")
-    return crud.update_book(db=db, db_book=db_book, book_in=book)
+    
+    image_bytes = await image.read() if image else None
+
+    book_in = schemas.BookUpdate(
+        title=title,
+        description=description,
+        amount=amount,
+        publisher=publisher,
+    )
+    return crud.update_book(db, db_book=db_book, book_in=book_in, image_blob=image_bytes)
 
 # Endpoint untuk menghapus buku - HANYA ADMIN
 @router_books.delete("/{book_id}", status_code=204)
-def delete_book(book_id: int, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
+async def delete_book(book_id: int, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
     """
     Menghapus buku berdasarkan ID.
     """

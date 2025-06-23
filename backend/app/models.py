@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 from sqlalchemy import (Column, Integer, String, ForeignKey, Text, Enum, DateTime,
-                        Float, Table, UniqueConstraint, Index)
+                        Float, Table, UniqueConstraint, Index, LargeBinary)
 from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
@@ -19,7 +19,7 @@ book_categories_table = Table('book_categories', Base.metadata,
 # --- Tabel Utama ---
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
@@ -47,6 +47,7 @@ class Book(Base):
     amount = Column(Integer, nullable=False, default=1)
     description = Column(Text, nullable=True)
     image = Column(String, nullable=True)
+    image_blob = Column(LargeBinary, nullable=True)
     publisher = Column(String, nullable=True)
     published_date = Column(String, nullable=True)
     rating = Column(Float, nullable=True)
