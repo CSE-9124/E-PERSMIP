@@ -1,32 +1,62 @@
-import { useState } from 'react'
-import AuthWrapper from './components/AuthWrapper'
-import HomeAdmin from './pages/admin/HomeAdmin'
-import HomeUser from './pages/user/HomeUser'
+import { useState, useEffect } from 'react'
+import AppRoutes from './AppRoutes'
 import './App.css'
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [role, setRole] = useState(null)
+  // Inisialisasi dari localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access_token'))
+  const [role, setRole] = useState(localStorage.getItem('user_role') || '')
+  const [isLoading, setIsLoading] = useState(true)
 
+  // Sync state dengan localStorage saat mount dan saat login/logout
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('access_token')
+      const savedRole = localStorage.getItem('user_role')
+      setIsAuthenticated(!!token)
+      setRole(savedRole || '')
+      setIsLoading(false)
+    }
+    checkAuth()
+    // Event listener untuk perubahan localStorage (misal: di tab lain)
+    window.addEventListener('storage', checkAuth)
+    return () => window.removeEventListener('storage', checkAuth)
+  }, [])
+
+  // Dipanggil setelah login sukses
   const handleLoginSuccess = (userRole) => {
     setIsAuthenticated(true)
     setRole(userRole)
   }
 
-  // Jika belum login, tampilkan AuthWrapper (login/register)
-  if (!isAuthenticated) {
-    return (
-      <AuthWrapper 
-        onLogin={handleLoginSuccess}
-      />
-    )
+  // Logout
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('user_role')
+    setIsAuthenticated(false)
+    setRole('')
   }
 
-  // Pisahkan komponen HomeAdmin dan HomeUser
-  if (role === 'admin') {
-    return <HomeAdmin onLogout={() => { setIsAuthenticated(false); setRole(null); }} />
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
-  return <HomeUser onLogout={() => { setIsAuthenticated(false); setRole(null); }} />
+  return (
+    <AppRoutes
+      isAuthenticated={isAuthenticated}
+      role={role}
+      setIsAuthenticated={setIsAuthenticated}
+      setRole={setRole}
+      handleLoginSuccess={handleLoginSuccess}
+      handleLogout={handleLogout}
+    />
+  )
 }
 
 export default App

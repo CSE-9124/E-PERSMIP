@@ -12,7 +12,7 @@ const autofillOverride = {
     borderColor: "#e5e7eb",
 };
 
-const Login = ({ onSwitchToRegister, onLogin }) => {
+const Login = ({ onSwitchToRegister, onLogin, isLoading, role, setRole }) => {
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -30,7 +30,7 @@ const Login = ({ onSwitchToRegister, onLogin }) => {
         e.preventDefault();
         try {
             await onLogin(formData);
-            navigate("/");
+            // Hapus/komentari redirect di sini, biar AuthWrapper yang handle
         } catch (err) {
             // Optional: tampilkan error jika ingin
         }
@@ -78,11 +78,33 @@ const Login = ({ onSwitchToRegister, onLogin }) => {
                                 style={autofillOverride}
                             />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Login sebagai</label>
+                            <div className="flex gap-4">
+                                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition ${role==='admin' ? 'bg-red-100 border-red-400 text-red-700 font-bold' : 'bg-white border-gray-200 text-gray-700'}`}> 
+                                    <input type="radio" name="role" value="admin" checked={role==='admin'} onChange={()=>setRole('admin')} className="accent-red-600" /> Admin
+                                </label>
+                                <label className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition ${role==='mahasiswa' ? 'bg-red-100 border-red-400 text-red-700 font-bold' : 'bg-white border-gray-200 text-gray-700'}`}> 
+                                    <input type="radio" name="role" value="mahasiswa" checked={role==='mahasiswa'} onChange={()=>setRole('mahasiswa')} className="accent-red-600" /> Mahasiswa
+                                </label>
+                            </div>
+                        </div>
                         <button
                             type="submit"
-                            className="w-full border-2 border-red-300 text-red-400 bg-white font-bold py-3 rounded-xl mt-2 transition-all duration-200 hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 hover:text-white hover:border-red-600 hover:shadow-lg"
+                            disabled={isLoading}
+                            className="w-full border-2 border-red-300 text-red-400 bg-white font-bold py-3 rounded-xl mt-2 transition-all duration-200 hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 hover:text-white hover:border-red-600 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Masuk
+                            {isLoading ? (
+                                <span className="flex items-center justify-center">
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Masuk...
+                                </span>
+                            ) : (
+                                'Masuk'
+                            )}
                         </button>
                     </form>
                     <p className="mt-6 text-center text-sm text-gray-600">

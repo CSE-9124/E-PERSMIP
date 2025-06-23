@@ -10,16 +10,12 @@ module.exports = {
   plugins: [require('daisyui')],
   daisyui: {
     themes: [
-      "light",
-      "dark",
-      "corporate",
-      "business",
       {
         persmip: {
-          "primary": "#3b82f6",
-          "secondary": "#10b981", 
+          "primary": "#be123c", // merah utama unhas
+          "secondary": "#fca5a5", // merah muda
           "accent": "#f59e0b",
-          "neutral": "#374151",
+          "neutral": "#f3f4f6", // abu muda
           "base-100": "#ffffff",
           "info": "#0ea5e9",
           "success": "#22c55e",
@@ -27,9 +23,11 @@ module.exports = {
           "error": "#ef4444",
         },
       },
+      "light"
     ],
     base: true,
     styled: true,
     utils: true,
+    darkTheme: false, // nonaktifkan dark mode
   },
 }
