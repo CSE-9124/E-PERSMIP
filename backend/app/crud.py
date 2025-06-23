@@ -3,16 +3,13 @@ from . import models, schemas
 from .core.security import get_password_hash
 
 # --- User CRUD ---
-def get_user(db: Session, user_id: int):
-    return db.query(models.User).filter(models.User.id == user_id).first()
-
-def get_user_by_email(db: Session, email: str):
+def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
     return db.query(models.User).filter(models.User.email == email).first()
 
-def get_users(db: Session, skip: int = 0, limit: int = 100):
+def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[models.User]:
     return db.query(models.User).offset(skip).limit(limit).all()
 
-def create_user(db: Session, user: schemas.UserCreate):
+def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     hashed_password = get_password_hash(user.password)
     db_user = models.User(
         email=user.email,
@@ -31,10 +28,10 @@ def get_book(db: Session, book_id: int) -> Optional[models.Book]:
 def get_books(db: Session, skip: int = 0, limit: int = 100) -> List[models.Book]:
     return db.query(models.Book).offset(skip).limit(limit).all()
 
-def create_book(db: Session, book: schemas.BookCreate) -> models.Book:
+def create_book(db: Session, book: schemas.BookCreate, image_blob: Optional[bytes] = None) -> models.Book:
     # 1. Menyiapkan data buku dasar
     book_data = book.dict(exclude={"authors", "categories"})
-    db_book = models.Book(**book_data)
+    db_book = models.Book(**book_data, image_blob=image_blob)
 
     # 2. Mengelola Penulis (Author)
     author_objects = []
@@ -62,11 +59,14 @@ def create_book(db: Session, book: schemas.BookCreate) -> models.Book:
     db.refresh(db_book)
     return db_book
 
-def update_book(db: Session, db_book: models.Book, book_in: schemas.BookUpdate) -> models.Book:
+def update_book(db: Session, db_book: models.Book, book_in: schemas.BookUpdate, image_blob: Optional[bytes] = None) -> models.Book:
     update_data = book_in.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_book, key, value)
     
+    if image_blob is not None:
+        db_book.image_blob = image_blob
+
     db.add(db_book)
     db.commit()
     db.refresh(db_book)
