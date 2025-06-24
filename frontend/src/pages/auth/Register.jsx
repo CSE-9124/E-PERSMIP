@@ -51,14 +51,14 @@ const Register = ({ onSwitchToLogin, onRegister, isLoading }) => {
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-base text-black placeholder-gray-400 transition-colors autofill:bg-white autofill:text-black" 
                                 style={{ WebkitTextFillColor: '#111', backgroundColor: '#fff', color: '#111', caretColor: '#111' }}
                                 placeholder="Email" />
-                        </div>
-                        <div>
+                        </div>                        <div>
                             <label htmlFor="register-password" className="block text-sm font-medium text-gray-700">Password</label>
                             <input id="register-password" name="password" type="password" required value={formData.password} onChange={handleChange} 
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-base text-black placeholder-gray-400 transition-colors autofill:bg-white autofill:text-black" 
                                 style={{ WebkitTextFillColor: '#111', backgroundColor: '#fff', color: '#111', caretColor: '#111' }}
-                                placeholder="Password" />
-                        </div>                        <button
+                                placeholder="Password (minimal 8 karakter)" />
+                            <p className="text-xs text-gray-500 mt-1">Password harus minimal 8 karakter</p>
+                        </div><button
                             type="submit"
                             disabled={isLoading}
                             className="w-full border-2 border-red-300 text-red-400 bg-white font-bold py-3 rounded-xl mt-2 transition-all duration-200 hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 hover:text-white hover:border-red-600 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"

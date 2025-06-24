@@ -90,6 +90,14 @@ class Category(BaseModel):
     class Config:
         orm_mode = True
 
+# --- Skema untuk BookInList (untuk response di Borrow) ---
+class BookInList(BaseModel):
+    id: int
+    title: str
+    image: Optional[str] = None
+    class Config:
+        orm_mode = True
+
 # --- Skema untuk Borrow ---
 class BorrowBase(BaseModel):
     book_id: int
