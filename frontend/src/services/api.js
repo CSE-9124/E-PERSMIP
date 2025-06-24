@@ -75,12 +75,11 @@ export const authAPI = {
       throw new Error(error.response?.data?.detail || 'Login failed');
     }
   },
-
   // Register function
   register: async (name, email, password) => {
     try {
       const response = await api.post('/api/v1/auth/register', {
-        name,
+        full_name: name,
         email,
         password,
       });
