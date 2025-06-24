@@ -42,22 +42,22 @@ const AppRoutes = ({ isAuthenticated, role, setIsAuthenticated, setRole, handleL
       } />
       {/* User routes */}
       <Route path="/user/home" element={
-        <RequireAuth allowedRole="mahasiswa">
+        <RequireAuth allowedRole="user">
           <HomeUser onLogout={handleLogout} />
         </RequireAuth>
       } />
       <Route path="/user/borrow" element={
-        <RequireAuth allowedRole="mahasiswa">
+        <RequireAuth allowedRole="user">
           <BorrowBook />
         </RequireAuth>
       } />
       <Route path="/user/search" element={
-        <RequireAuth allowedRole="mahasiswa">
+        <RequireAuth allowedRole="user">
           <SearchBook />
         </RequireAuth>
       } />
       <Route path="/user/history" element={
-        <RequireAuth allowedRole="mahasiswa">
+        <RequireAuth allowedRole="user">
           <BorrowHistory />
         </RequireAuth>
       } />

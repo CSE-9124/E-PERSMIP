@@ -48,7 +48,7 @@ export const authAPI = {
     try {
       // FastAPI OAuth2PasswordRequestForm expects form data
       const formData = new URLSearchParams();
-      formData.append('username', email); // OAuth2PasswordRequestForm uses 'username' field
+      formData.append('email', email); 
       formData.append('password', password);
 
       const response = await api.post('/api/v1/auth/token', formData, {
@@ -65,8 +65,8 @@ export const authAPI = {
       const userResponse = await api.get('/api/v1/auth/users/me');
       const user = userResponse.data;
       
-      // Determine role (you might want to add role field to your User model)
-      const role = user.email.toLowerCase().includes('admin') ? 'admin' : 'user';
+      // Ambil role langsung dari backend
+      const role = user.role;
       localStorage.setItem('user_role', role);
 
       return { user, role, token: access_token };

@@ -1,5 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from .. import crud, schemas, dependencies
 from ..core import security
@@ -7,9 +6,9 @@ from ..core import security
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 
 @router.post("/token", response_model=schemas.Token)
-def login_for_access_token(db: Session = Depends(dependencies.get_db), form_data: OAuth2PasswordRequestForm = Depends()):
-    user = crud.get_user_by_email(db, email=form_data.email)
-    if not user or not security.verify_password(form_data.password, user.hashed_password):
+def login_for_access_token(db: Session = Depends(dependencies.get_db), email: str = Form(...), password: str = Form(...) ):
+    user = crud.get_user_by_email(db, email=email)
+    if not user or not security.verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
