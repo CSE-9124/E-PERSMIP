@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/solid'
+import { PlusIcon, PencilSquareIcon, TrashIcon, EyeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid'
+import { useNavigate } from 'react-router-dom'
 import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 import NavbarAdmin from '../../components/NavbarAdmin'
 import { booksAPI } from '../../services/api'
 
 function BookManagement() {
+  const navigate = useNavigate()
   const [books, setBooks] = useState([])
+  const [filteredBooks, setFilteredBooks] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ 
     id: null, 
@@ -18,13 +21,14 @@ function BookManagement() {
     image: null
   })
   const [editMode, setEditMode] = useState(false)
-  const [filter, setFilter] = useState('')
-  const [filterCol, setFilterCol] = useState('all')
-  const [showFilterOpt, setShowFilterOpt] = useState(false)
-  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [notification, setNotification] = useState(null)
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [stockFilter, setStockFilter] = useState('semua')
   
   // Image cropping states
   const [imagePreview, setImagePreview] = useState(null)
@@ -33,12 +37,43 @@ function BookManagement() {
   const [showCropModal, setShowCropModal] = useState(false)
   const imgRef = useRef(null)
   const previewCanvasRef = useRef(null)
-  
-  const pageSize = 5
 
   useEffect(() => {
     fetchBooks()
   }, [])
+
+  // Filter dan search effect
+  useEffect(() => {
+    let filtered = books
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (book) =>
+          book.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          book.publisher?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (book.authors && book.authors.some(author => 
+            author.name?.toLowerCase().includes(searchTerm.toLowerCase())
+          ))
+      )
+    }
+
+    // Filter by stock
+    if (stockFilter !== 'semua') {
+      if (stockFilter === 'tersedia') {
+        filtered = filtered.filter((book) => book.amount > 0)
+      } else if (stockFilter === 'habis') {
+        filtered = filtered.filter((book) => book.amount === 0)
+      }
+    }
+
+    setFilteredBooks(filtered)
+  }, [books, searchTerm, stockFilter])
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
   const fetchBooks = async () => {
     setLoading(true)
@@ -48,31 +83,12 @@ function BookManagement() {
       setBooks(data)
     } catch (err) {
       setError('Gagal memuat data buku')
+      showNotification('Gagal memuat data buku: ' + err.message, 'error')
     } finally {
       setLoading(false)
     }
   }
 
-  // Filter logic
-  const filteredBooks = books.filter(b => {
-    const q = filter.toLowerCase()
-    if (!q) return true
-    if (filterCol === 'all') {
-      return (
-        b.title.toLowerCase().includes(q) ||
-        (b.authors && b.authors.map(a => a.name).join(', ').toLowerCase().includes(q)) ||
-        String(b.amount).includes(q) ||
-        (b.publisher && b.publisher.toLowerCase().includes(q))
-      )
-    }
-    if (filterCol === 'title') return b.title.toLowerCase().includes(q)
-    if (filterCol === 'author') return b.authors && b.authors.map(a => a.name).join(', ').toLowerCase().includes(q)
-    if (filterCol === 'amount') return String(b.amount).includes(q)
-    if (filterCol === 'publisher') return b.publisher && b.publisher.toLowerCase().includes(q)
-    return true
-  })
-  const totalPages = Math.max(1, Math.ceil(filteredBooks.length / pageSize))
-  const paginatedBooks = filteredBooks.slice((page - 1) * pageSize, page * pageSize)
   const handleOpenForm = (book = null) => {
     if (book) {
       setForm({
@@ -121,6 +137,7 @@ function BookManagement() {
     setCrop(undefined)
     setCompletedCrop(undefined)
   }
+
   const handleChange = (e) => {
     if (e.target.name === 'image') {
       const file = e.target.files[0]
@@ -229,128 +246,172 @@ function BookManagement() {
     try {
       if (editMode) {
         await booksAPI.updateBook(form.id, form)
-        alert('Buku berhasil diupdate!')
+        showNotification('Buku berhasil diupdate!')
       } else {
         await booksAPI.createBook(form)
-        alert('Buku berhasil ditambahkan!')
+        showNotification('Buku berhasil ditambahkan!')
       }
       handleCloseForm()
       await fetchBooks() // Refresh data
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      showNotification(`Error: ${err.message}`, 'error')
     } finally {
       setSubmitting(false)
     }
   }
+
   const handleDelete = async (id) => {
     if (window.confirm('Yakin ingin menghapus buku ini?')) {
       try {
         await booksAPI.deleteBook(id)
-        alert('Buku berhasil dihapus!')
+        showNotification('Buku berhasil dihapus!')
         await fetchBooks() // Refresh data
       } catch (err) {
-        alert(`Error: ${err.message}`)
+        showNotification(`Error: ${err.message}`, 'error')
       }
     }
-  }
-  
+  }  
   return (
-    <div className="min-h-screen bg-white overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50">
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-medium ${
+          notification.type === 'error' 
+            ? 'bg-red-100 border border-red-400 text-red-700' 
+            : 'bg-green-100 border border-green-400 text-green-700'
+        }`}>
+          {notification.message}
+        </div>
+      )}
+      
       <NavbarAdmin />
-      <div className="max-w-6xl mx-auto px-4 py-8 overflow-x-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-extrabold text-red-800 tracking-tight drop-shadow-sm">Kelola Buku</h1>
-          <button
-            className="flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 transition px-4 py-2 rounded-lg font-semibold shadow-sm border border-red-200 text-sm"
-            onClick={() => handleOpenForm()}
-          >
-            <PlusIcon className="h-4 w-4" /> Tambah Buku
-          </button>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-red-800 mb-2">Kelola Buku</h1>
+          <p className="text-gray-600">Kelola dan pantau semua koleksi buku perpustakaan</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 relative">
-          <div className="flex w-full sm:w-auto gap-2 items-center">
-            <input
-              type="text"
-              placeholder={
-                filterCol === 'all' ? 'Cari judul, penulis, stok, penerbit...' :
-                filterCol === 'title' ? 'Cari judul...' :
-                filterCol === 'author' ? 'Cari penulis...' :
-                filterCol === 'amount' ? 'Cari stok...' :
-                'Cari penerbit...'
-              }
-              value={filter}
-              onChange={e => { setFilter(e.target.value); setPage(1); }}
-              className="w-full sm:w-72 border border-red-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white placeholder-gray-300 shadow-sm"
-            />
-            <div className="relative">
-              <button
-                type="button"
-                className="flex items-center gap-1 px-3 py-2 rounded-lg border border-red-200 bg-white text-red-700 font-semibold hover:bg-red-100 transition shadow-sm text-sm"
-                onClick={() => setShowFilterOpt(v => !v)}
-                aria-label="Filter Kolom"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 13.414V19a1 1 0 01-1.447.894l-2-1A1 1 0 009 18v-4.586a1 1 0 00-.293-.707L2.293 6.707A1 1 0 012 6V4z" /></svg>
-                <span className="hidden sm:inline">Filter</span>
-              </button>
-              {showFilterOpt && (
-                <div className="absolute right-0 mt-2 w-40 bg-white border border-red-100 rounded-lg shadow-lg z-10">
-                  <ul className="py-1 text-sm text-gray-700">
-                    <li><button className={`w-full text-left px-4 py-2 hover:bg-red-50 ${filterCol==='all'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('all');setShowFilterOpt(false)}}>Semua Kolom</button></li>
-                    <li><button className={`w-full text-left px-4 py-2 hover:bg-red-50 ${filterCol==='title'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('title');setShowFilterOpt(false)}}>Judul</button></li>
-                    <li><button className={`w-full text-left px-4 py-2 hover:bg-red-50 ${filterCol==='author'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('author');setShowFilterOpt(false)}}>Penulis</button></li>
-                    <li><button className={`w-full text-left px-4 py-2 hover:bg-red-50 ${filterCol==='amount'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('amount');setShowFilterOpt(false)}}>Stok</button></li>
-                    <li><button className={`w-full text-left px-4 py-2 hover:bg-red-50 ${filterCol==='publisher'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('publisher');setShowFilterOpt(false)}}>Penerbit</button></li>
-                  </ul>
-                </div>
-              )}
+        {/* Search and Filter Bar */}
+        <div className="bg-white rounded-2xl shadow-xl border border-red-100 p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari berdasarkan judul, penulis, atau penerbit..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+              />
             </div>
+            
+            {/* Stock Filter */}
+            <div className="md:w-48">
+              <select
+                value={stockFilter}
+                onChange={(e) => setStockFilter(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white"
+              >
+                <option value="semua">Semua Stok</option>
+                <option value="tersedia">Tersedia</option>
+                <option value="habis">Habis</option>
+              </select>
+            </div>
+
+            {/* Add Book Button */}
+            <button
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-2"
+              onClick={() => handleOpenForm()}
+            >
+              <PlusIcon className="h-5 w-5" />
+              Tambah Buku
+            </button>
+          </div>
+          
+          {/* Results Count */}
+          <div className="mt-4 text-sm text-gray-600">
+            Menampilkan {filteredBooks.length} dari {books.length} buku
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-400 py-12">Memuat data buku...</div>
-        ) : error ? (
-          <div className="text-center text-red-500 py-12">{error}</div>
-        ) : (          <>
-            <div className="rounded-lg shadow border border-red-100 bg-white overflow-x-auto">
-              <table className="min-w-full text-sm" style={{ minWidth: '1000px' }}>                <thead>
-                  <tr className="bg-red-50 border-b border-red-100">
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Judul</th>
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Penulis</th>
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Penerbit</th>
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Tanggal Terbit</th>
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Stok</th>
-                    <th className="px-6 py-3 text-center font-bold text-red-700 uppercase tracking-wider text-xs">Aksi</th>
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <p className="mt-4 text-gray-600">Memuat data buku...</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-xl border border-red-100 overflow-hidden">
+            <div className="overflow-x-auto" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+              <style jsx>{`
+                div::-webkit-scrollbar {
+                  display: none;
+                }
+              `}</style>
+              <table className="min-w-full" style={{minWidth: '800px'}}>
+                <thead className="bg-red-600 text-white">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Gambar</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Judul</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Penulis</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Penerbit</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Stok</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>                  {paginatedBooks.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="text-center py-8 text-gray-400">Tidak ada data yang cocok.</td>
-                    </tr>
-                  )}
-                  {paginatedBooks.map((book, idx) => (
-                    <tr key={book.id} className={`${(idx % 2 === 0 ? 'bg-white' : 'bg-red-50')} border-b border-red-50 hover:bg-red-100/60 transition`}>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{book.title}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">
-                        {book.authors?.length > 0 ? book.authors.map(a => a.name).join(', ') : '-'}
+                <tbody className="divide-y divide-gray-200">
+                  {filteredBooks.map((book, index) => (
+                    <tr key={book.id} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="h-16 w-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                          {book.image ? (
+                            <img src={book.image} alt={book.title} className="h-full w-full object-cover" />
+                          ) : (
+                            <span className="text-gray-400 text-xs">No img</span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">{book.publisher || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">{book.published_date || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">{book.amount}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            className="flex items-center gap-1 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border border-yellow-200 rounded-lg px-2 py-1 text-xs font-semibold transition shadow-sm"
-                            onClick={() => handleOpenForm(book)}
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900 max-w-xs truncate">{book.title}</div>
+                        <div className="text-sm text-gray-500">ID: {book.id}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 max-w-xs truncate">
+                          {book.authors?.map(author => author.name).join(', ') || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{book.publisher || '-'}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          book.amount > 0 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {book.amount} buku
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex gap-2">                          <button 
+                            onClick={() => navigate(`/admin/book/${book.id}`)} 
+                            className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-1"
                           >
-                            <PencilSquareIcon className="h-3 w-3" /> Edit
+                            <EyeIcon className="h-4 w-4" />
+                            Detail
                           </button>
-                          <button
-                            className="flex items-center gap-1 bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 rounded-lg px-2 py-1 text-xs font-semibold transition shadow-sm"
-                            onClick={() => handleDelete(book.id)}
+                          <button 
+                            onClick={() => handleOpenForm(book)} 
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-1"
                           >
-                            <TrashIcon className="h-3 w-3" /> Hapus
+                            <PencilSquareIcon className="h-4 w-4" />
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(book.id)} 
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-1"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                            Hapus
                           </button>
                         </div>
                       </td>
@@ -359,27 +420,16 @@ function BookManagement() {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4">
-              <span className="text-gray-500 text-sm">
-                Halaman {page} dari {totalPages} | Total: {filteredBooks.length} buku
-              </span>
-              <div className="flex gap-2">
-                <button
-                  className="px-3 py-1 rounded-lg border border-red-200 bg-white text-red-700 font-semibold hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >Sebelumnya</button>
-                <button
-                  className="px-3 py-1 rounded-lg border border-red-200 bg-white text-red-700 font-semibold hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >Berikutnya</button>
+            {filteredBooks.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-lg mb-2">📚</div>
+                <p className="text-gray-500">Tidak ada data buku yang ditemukan</p>
               </div>
-            </div>
-          </>
-        )}        {/* Modal Form */}
+            )}
+          </div>
+        )}
+
+        {/* Modal Form */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 transition-all">
             <div className="relative bg-white rounded-2xl shadow-2xl border border-red-100 w-full max-w-5xl max-h-[90vh] overflow-y-auto p-0 animate-fadeIn" 
@@ -482,11 +532,12 @@ function BookManagement() {
                 </div>
               </div>
             </div>
-          </div>        )}
+          </div>
+        )}
 
         {/* Modal Crop */}
         {showCropModal && imagePreview && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 transition-all">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 transition-all">
             <div className="relative bg-white rounded-2xl shadow-2xl border border-red-100 w-full max-w-lg p-0 animate-fadeIn">
               <button
                 className="absolute top-3 right-3 text-gray-400 hover:text-red-600 transition-colors text-2xl p-1 rounded-full focus:outline-none z-10"

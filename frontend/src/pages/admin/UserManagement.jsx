@@ -1,25 +1,53 @@
 import React, { useState, useEffect } from 'react'
 import NavbarAdmin from '../../components/NavbarAdmin'
-import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/solid'
+import { PlusIcon, PencilSquareIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { usersAPI, authAPI } from '../../services/api'
 
 function UserManagement() {
   const [users, setUsers] = useState([])
+  const [filteredUsers, setFilteredUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ id: null, full_name: '', email: '', password: '', role: 'user', is_active: true })
   const [editMode, setEditMode] = useState(false)
-  const [filter, setFilter] = useState('')
-  const [filterCol, setFilterCol] = useState('all')
-  const [showFilterOpt, setShowFilterOpt] = useState(false)
-  const [page, setPage] = useState(1)
   const [notification, setNotification] = useState(null)
-  const pageSize = 5
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [roleFilter, setRoleFilter] = useState('semua')
+  const [statusFilter, setStatusFilter] = useState('semua')
 
   // Fetch users on component mount
   useEffect(() => {
     fetchUsers()
   }, [])
+
+  // Filter dan search effect
+  useEffect(() => {
+    let filtered = users
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (user) =>
+          user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // Filter by role
+    if (roleFilter !== 'semua') {
+      filtered = filtered.filter((user) => user.role === roleFilter)
+    }
+
+    // Filter by status
+    if (statusFilter !== 'semua') {
+      const isActive = statusFilter === 'aktif'
+      filtered = filtered.filter((user) => user.is_active === isActive)
+    }
+
+    setFilteredUsers(filtered)
+  }, [users, searchTerm, roleFilter, statusFilter])
 
   const fetchUsers = async () => {
     try {
@@ -39,27 +67,6 @@ function UserManagement() {
     setTimeout(() => setNotification(null), 3000)
   }
 
-  // Filter logic
-  const filteredUsers = users.filter(u => {
-    const q = filter.toLowerCase()
-    if (!q) return true
-    if (filterCol === 'all') {
-      return (
-        u.full_name.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.role.toLowerCase().includes(q) ||
-        (u.is_active ? 'aktif' : 'nonaktif').toLowerCase().includes(q)
-      )
-    }
-    if (filterCol === 'name') return u.full_name.toLowerCase().includes(q)
-    if (filterCol === 'email') return u.email.toLowerCase().includes(q)
-    if (filterCol === 'role') return u.role.toLowerCase().includes(q)
-    if (filterCol === 'status') return (u.is_active ? 'aktif' : 'nonaktif').toLowerCase().includes(q)
-    return true
-  })
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
-  const paginatedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize)
-
   const handleOpenForm = (user = null) => {
     if (user) {
       setForm({
@@ -76,6 +83,7 @@ function UserManagement() {
     }
     setShowForm(true)
   }
+
   const handleCloseForm = () => {
     setShowForm(false)
     setForm({ id: null, full_name: '', email: '', password: '', role: 'user', is_active: true })
@@ -101,25 +109,31 @@ function UserManagement() {
           is_active: form.is_active
         }
         await usersAPI.updateUser(form.id, updateData)
-        showNotification('User berhasil diupdate')      } else {
-        // Create user - need to register via auth API
-        await authAPI.register(form.full_name, form.email, form.password || 'Password123!')
-        showNotification('User berhasil ditambahkan')
+        showNotification('User berhasil diupdate!')
+      } else {
+        // Create new user
+        await authAPI.register({
+          full_name: form.full_name,
+          email: form.email,
+          password: form.password,
+          role: form.role
+        })
+        showNotification('User baru berhasil ditambahkan!')
       }
-      await fetchUsers() // Refresh the list
       handleCloseForm()
+      fetchUsers()
     } catch (error) {
       console.error('Error saving user:', error)
       showNotification('Gagal menyimpan user: ' + error.message, 'error')
     }
   }
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Yakin ingin menghapus user ini?')) {
+  const handleDelete = async (userId) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus user ini?')) {
       try {
-        await usersAPI.deleteUser(id)
-        showNotification('User berhasil dihapus')
-        await fetchUsers() // Refresh the list
+        await usersAPI.deleteUser(userId)
+        showNotification('User berhasil dihapus!')
+        fetchUsers()
       } catch (error) {
         console.error('Error deleting user:', error)
         showNotification('Gagal menghapus user: ' + error.message, 'error')
@@ -128,10 +142,9 @@ function UserManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Notification */}
+    <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50">
       {notification && (
-        <div className={`fixed top-4 right-4 px-4 py-3 rounded shadow-lg z-50 animate-fade-in ${
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-medium ${
           notification.type === 'error' 
             ? 'bg-red-100 border border-red-400 text-red-700' 
             : 'bg-green-100 border border-green-400 text-green-700'
@@ -141,113 +154,129 @@ function UserManagement() {
       )}
       
       <NavbarAdmin />
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h1 className="text-3xl font-extrabold text-red-800 tracking-tight drop-shadow-sm">Kelola User</h1>
-          <button
-            className="flex items-center gap-2 bg-red-100 text-red-700 hover:bg-red-200 transition px-4 py-2 rounded-lg font-semibold shadow-sm border border-red-200 text-sm"
-            onClick={() => handleOpenForm()}
-          >
-            <PlusIcon className="h-4 w-4" /> Tambah User
-          </button>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-red-800 mb-2">Kelola User</h1>
+          <p className="text-gray-600">Kelola dan pantau semua pengguna perpustakaan</p>
+        </div>
+
+        {/* Search and Filter Bar */}
+        <div className="bg-white rounded-2xl shadow-xl border border-red-100 p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari berdasarkan nama atau email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
+              />
+            </div>
+            
+            {/* Role Filter */}
+            <div className="md:w-48">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white"
+              >
+                <option value="semua">Semua Role</option>
+                <option value="admin">Admin</option>
+                <option value="user">User</option>
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div className="md:w-48">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white"
+              >
+                <option value="semua">Semua Status</option>
+                <option value="aktif">Aktif</option>
+                <option value="nonaktif">Non-Aktif</option>
+              </select>
+            </div>
+
+            {/* Add User Button */}
+            <button
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-2"
+              onClick={() => handleOpenForm()}
+            >
+              <PlusIcon className="h-5 w-5" />
+              Tambah User
+            </button>
+          </div>
+          
+          {/* Results Count */}
+          <div className="mt-4 text-sm text-gray-600">
+            Menampilkan {filteredUsers.length} dari {users.length} pengguna
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Memuat data...</p>
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+            <p className="mt-4 text-gray-600">Memuat data pengguna...</p>
           </div>
         ) : (
-          <>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 relative">
-              <div className="flex w-full sm:w-auto gap-2 items-center">
-                <input
-                  type="text"
-                  placeholder={
-                    filterCol === 'all' ? 'Cari nama, email, role, status...' :
-                    filterCol === 'name' ? 'Cari nama...' :
-                    filterCol === 'email' ? 'Cari email...' :
-                    filterCol === 'role' ? 'Cari role...' :
-                    'Cari status...'
-                  }
-                  value={filter}
-                  onChange={e => { setFilter(e.target.value); setPage(1); }}
-                  className="w-full sm:w-72 border border-red-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white placeholder-gray-300 shadow-sm"
-                />
-                <div className="relative">
-                  <button
-                    type="button"
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg border border-red-200 bg-white text-red-700 font-semibold hover:bg-red-100 transition shadow-sm text-sm"
-                    onClick={() => setShowFilterOpt(v => !v)}
-                    aria-label="Filter Kolom"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 13.414V19a1 1 0 01-1.447.894l-2-1A1 1 0 009 18v-4.586a1 1 0 00-.293-.707L2.293 6.707A1 1 0 012 6V4z" /></svg>
-                    <span className="hidden sm:inline">Filter</span>
-                  </button>
-                  {showFilterOpt && (
-                    <div className="absolute right-0 mt-2 w-40 bg-white border border-red-100 rounded-lg shadow-lg z-10">
-                      <ul className="py-1 text-sm text-gray-700">
-                        <li>
-                          <button className={`w-full text-left px-4 py-2 hover:bg-red-50 focus:bg-red-50 active:bg-red-50 bg-white text-red-700 rounded ${filterCol==='all'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('all');setShowFilterOpt(false)}}>Semua Kolom</button>
-                        </li>
-                        <li>
-                          <button className={`w-full text-left px-4 py-2 hover:bg-red-50 focus:bg-red-50 active:bg-red-50 bg-white text-gray-700 rounded ${filterCol==='name'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('name');setShowFilterOpt(false)}}>Nama</button>
-                        </li>
-                        <li>
-                          <button className={`w-full text-left px-4 py-2 hover:bg-red-50 focus:bg-red-50 active:bg-red-50 bg-white text-gray-700 rounded ${filterCol==='email'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('email');setShowFilterOpt(false)}}>Email</button>
-                        </li>
-                        <li>
-                          <button className={`w-full text-left px-4 py-2 hover:bg-red-50 focus:bg-red-50 active:bg-red-50 bg-white text-gray-700 rounded ${filterCol==='role'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('role');setShowFilterOpt(false)}}>Role</button>
-                        </li>
-                        <li>
-                          <button className={`w-full text-left px-4 py-2 hover:bg-red-50 focus:bg-red-50 active:bg-red-50 bg-white text-gray-700 rounded ${filterCol==='status'?'font-bold text-red-700':''}`} onClick={() => {setFilterCol('status');setShowFilterOpt(false)}}>Status</button>
-                        </li>
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto rounded-lg shadow border border-red-100 bg-white">
-              <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="bg-red-50 border-b border-red-100">
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Nama</th>
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Email</th>
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Role</th>
-                    <th className="px-6 py-3 text-left font-bold text-red-700 uppercase tracking-wider text-xs">Status</th>
-                    <th className="px-6 py-3 text-center font-bold text-red-700 uppercase tracking-wider text-xs">Aksi</th>
+          <div className="bg-white rounded-2xl shadow-xl border border-red-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-red-600 text-white">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Nama</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Role</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {paginatedUsers.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="text-center py-8 text-gray-400">Tidak ada data yang cocok.</td>
-                    </tr>
-                  )}
-                  {paginatedUsers.map((user, idx) => (
-                    <tr
-                      key={user.id}
-                      className={`${(idx % 2 === 0 ? 'bg-white' : 'bg-red-50')} border-b border-red-50 hover:bg-red-100/60 transition`}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{user.full_name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700">{user.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700 capitalize">{user.role}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-700 capitalize">{user.is_active ? 'Aktif' : 'Nonaktif'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            className="flex items-center gap-1 bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border border-yellow-200 rounded-lg px-2 py-1 text-xs font-semibold transition shadow-sm"
-                            onClick={() => handleOpenForm(user)}
+                <tbody className="divide-y divide-gray-200">
+                  {filteredUsers.map((user, index) => (
+                    <tr key={user.id} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{user.email}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          user.role === 'admin' 
+                            ? 'bg-purple-100 text-purple-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {user.role === 'admin' ? 'Admin' : 'User'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                          user.is_active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {user.is_active ? 'Aktif' : 'Non-Aktif'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleOpenForm(user)} 
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-1"
                           >
-                            <PencilSquareIcon className="h-3 w-3" /> Edit
+                            <PencilSquareIcon className="h-4 w-4" />
+                            Edit
                           </button>
-                          <button
-                            className="flex items-center gap-1 bg-red-100 text-red-700 hover:bg-red-200 border border-red-200 rounded-lg px-2 py-1 text-xs font-semibold transition shadow-sm"
-                            onClick={() => handleDelete(user.id)}
+                          <button 
+                            onClick={() => handleDelete(user.id)} 
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md flex items-center gap-1"
                           >
-                            <TrashIcon className="h-3 w-3" /> Hapus
+                            <TrashIcon className="h-4 w-4" />
+                            Hapus
                           </button>
                         </div>
                       </td>
@@ -256,26 +285,13 @@ function UserManagement() {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4">
-              <span className="text-gray-500 text-sm">
-                Halaman {page} dari {totalPages} | Total: {filteredUsers.length} user
-              </span>
-              <div className="flex gap-2">
-                <button
-                  className="px-3 py-1 rounded-lg border border-red-200 bg-white text-red-700 font-semibold hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >Sebelumnya</button>
-                <button
-                  className="px-3 py-1 rounded-lg border border-red-200 bg-white text-red-700 font-semibold hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >Berikutnya</button>
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-gray-400 text-lg mb-2">👥</div>
+                <p className="text-gray-500">Tidak ada data pengguna yang ditemukan</p>
               </div>
-            </div>
-          </>
+            )}
+          </div>
         )}
 
         {/* Modal/Form Tambah/Edit User */}
@@ -287,7 +303,7 @@ function UserManagement() {
                 onClick={handleCloseForm}
                 aria-label="Tutup"
               >
-                &times;
+                ×
               </button>
               <div className="px-8 pt-8 pb-6">
                 <h2 className="text-2xl font-extrabold mb-6 text-red-700 text-center tracking-tight">

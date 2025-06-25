@@ -28,7 +28,7 @@ function NavbarUser({ onLogout }) {
             <Link 
               to="/user/home" 
               className={`text-white font-semibold px-3 py-2 rounded-lg transition-all duration-200 ${
-                isActive('/user/home') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-red-900 hover:bg-opacity-30'
+                isActive('/user/home') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200'
               }`}
             >
               Beranda
@@ -36,15 +36,15 @@ function NavbarUser({ onLogout }) {
             <Link 
               to="/user/borrow" 
               className={`text-white font-semibold px-3 py-2 rounded-lg transition-all duration-200 ${
-                isActive('/user/borrow') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-red-900 hover:bg-opacity-30'
+                isActive('/user/borrow') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200'
               }`}
             >
-              Pinjam Buku
+              Koleksi Buku
             </Link>
             <Link 
               to="/user/history" 
               className={`text-white font-semibold px-3 py-2 rounded-lg transition-all duration-200 ${
-                isActive('/user/history') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-red-900 hover:bg-opacity-30'
+                isActive('/user/history') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200'
               }`}
             >
               Riwayat Peminjaman
@@ -59,11 +59,10 @@ function NavbarUser({ onLogout }) {
             >
               Logout
             </button>
-            
-            {/* Mobile menu button */}
+              {/* Mobile menu button */}
             <button
               onClick={toggleMobileMenu}
-              className="md:hidden text-white p-2"
+              className="md:hidden text-white p-2 rounded-lg bg-red-700/80 hover:bg-red-800 transition-colors border border-white/20"
             >
               {isMobileMenuOpen ? (
                 <XMarkIcon className="h-6 w-6" />
@@ -73,48 +72,47 @@ function NavbarUser({ onLogout }) {
             </button>
           </div>
         </div>
-        
-        {/* Mobile Navigation Menu */}
+          {/* Mobile Navigation Menu */}
         {isMobileMenuOpen && (
           <div className="md:hidden pb-4">
-            <nav className="flex flex-col space-y-2">
-              <Link 
+            <div className="bg-white/10 rounded-2xl p-4 space-y-2">              <Link 
                 to="/user/home" 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`text-white font-semibold px-3 py-2 rounded-lg transition-all duration-200 ${
-                  isActive('/user/home') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-red-900 hover:bg-opacity-30'
+                className={`block px-4 py-3 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200 ${
+                  isActive('/user/home') ? 'bg-white/30 text-white font-bold' : ''
                 }`}
               >
                 Beranda
-              </Link>
-              <Link 
+              </Link>              <Link 
                 to="/user/borrow" 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`text-white font-semibold px-3 py-2 rounded-lg transition-all duration-200 ${
-                  isActive('/user/borrow') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-red-900 hover:bg-opacity-30'
+                className={`block px-4 py-3 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200 ${
+                  isActive('/user/borrow') ? 'bg-white/30 text-white font-bold' : ''
                 }`}
               >
-                Pinjam Buku
+                Koleksi Buku
               </Link>
               <Link 
                 to="/user/history" 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`text-white font-semibold px-3 py-2 rounded-lg transition-all duration-200 ${
-                  isActive('/user/history') ? 'bg-red-900 bg-opacity-50' : 'hover:bg-red-900 hover:bg-opacity-30'
+                className={`block px-4 py-3 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200 ${
+                  isActive('/user/history') ? 'bg-white/30 text-white font-bold' : ''
                 }`}
               >
                 Riwayat Peminjaman
               </Link>
-              <div className="flex flex-col space-y-2 pt-2 border-t border-red-600">
-                <span className="text-white font-semibold text-center py-2">Mahasiswa</span>
-                <button
-                  onClick={onLogout}
-                  className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white font-bold px-5 py-2 rounded-xl transition-all duration-200"
-                >
-                  Logout
-                </button>
+              <div className="border-t border-white/20 pt-3 mt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-white font-semibold text-sm bg-red-900 bg-opacity-30 px-3 py-1 rounded-xl">Mahasiswa</span>
+                  <button
+                    onClick={onLogout}
+                    className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white font-bold px-4 py-2 rounded-xl transition-all duration-200"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
-            </nav>
+            </div>
           </div>
         )}
       </div>

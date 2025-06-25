@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import HomeAdmin from './pages/admin/HomeAdmin'
 import HomeUser from './pages/user/HomeUser'
 import BookManagement from './pages/admin/BookManagement'
+import BookDetailAdmin from './pages/admin/BookDetailAdmin'
 import UserManagement from './pages/admin/UserManagement'
 import Statistics from './pages/admin/Statistics'
 import AuthWrapper from './components/AuthWrapper'
@@ -25,10 +26,14 @@ const AppRoutes = ({ isAuthenticated, role, setIsAuthenticated, setRole, handleL
         <RequireAuth allowedRole="admin">
           <HomeAdmin onLogout={handleLogout} />
         </RequireAuth>
-      } />
-      <Route path="/admin/books" element={
+      } />      <Route path="/admin/books" element={
         <RequireAuth allowedRole="admin">
           <BookManagement />
+        </RequireAuth>
+      } />
+      <Route path="/admin/book/:bookId" element={
+        <RequireAuth allowedRole="admin">
+          <BookDetailAdmin />
         </RequireAuth>
       } />
       <Route path="/admin/users" element={

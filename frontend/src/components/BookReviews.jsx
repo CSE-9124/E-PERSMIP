@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { StarIcon } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline'
-import { PaperAirplaneIcon } from '@heroicons/react/24/solid'
-import { reviewsAPI, booksAPI } from '../services/api'
+import { PaperAirplaneIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
+import { reviewsAPI, booksAPI, authAPI } from '../services/api'
 
 function BookReviews({ bookId }) {
   const [reviews, setReviews] = useState([])
   const [book, setBook] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null)
+  const [userReview, setUserReview] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [newReview, setNewReview] = useState({
     review_score: 5,
     review_text: ''
@@ -20,16 +23,28 @@ function BookReviews({ bookId }) {
       fetchBookAndReviews()
     }
   }, [bookId])
-
   const fetchBookAndReviews = async () => {
     try {
       setLoading(true)
-      const [bookData, reviewsData] = await Promise.all([
+      const [bookData, reviewsData, userData] = await Promise.all([
         booksAPI.getBook(bookId),
-        reviewsAPI.getReviewsForBook(bookId)
+        reviewsAPI.getReviewsForBook(bookId),
+        authAPI.getCurrentUser()
       ])
       setBook(bookData)
       setReviews(reviewsData)
+      setCurrentUser(userData)
+      
+      // Find user's existing review
+      const existingReview = reviewsData.find(review => review.owner.id === userData.id)
+      setUserReview(existingReview)
+      
+      if (existingReview) {
+        setNewReview({
+          review_score: existingReview.review_score,
+          review_text: existingReview.review_text
+        })
+      }
     } catch (error) {
       console.error('Error fetching book and reviews:', error)
       showNotification('Gagal memuat data: ' + error.message, 'error')
@@ -42,18 +57,59 @@ function BookReviews({ bookId }) {
     setNotification({ message, type })
     setTimeout(() => setNotification(null), 3000)
   }
-
   const handleSubmitReview = async (e) => {
     e.preventDefault()
     try {
-      await reviewsAPI.createReview(bookId, newReview)
-      showNotification('Review berhasil ditambahkan!')
-      setNewReview({ review_score: 5, review_text: '' })
+      if (isEditing && userReview) {
+        // Update existing review
+        await reviewsAPI.updateReview(userReview.id, newReview)
+        showNotification('Review berhasil diperbarui!')
+        setIsEditing(false)
+      } else {
+        // Create new review
+        await reviewsAPI.createReview(bookId, newReview)
+        showNotification('Review berhasil ditambahkan!')
+      }
+      
       setShowForm(false)
       await fetchBookAndReviews() // Refresh reviews
     } catch (error) {
-      console.error('Error creating review:', error)
-      showNotification('Gagal menambahkan review: ' + error.message, 'error')
+      console.error('Error saving review:', error)
+      const action = isEditing ? 'memperbarui' : 'menambahkan'
+      showNotification(`Gagal ${action} review: ` + error.message, 'error')
+    }
+  }
+
+  const handleEditReview = () => {
+    setIsEditing(true)
+    setShowForm(true)
+  }
+
+  const handleDeleteReview = async () => {
+    if (!userReview || !window.confirm('Apakah Anda yakin ingin menghapus review ini?')) {
+      return
+    }
+    
+    try {
+      await reviewsAPI.deleteReview(userReview.id)
+      showNotification('Review berhasil dihapus!')
+      await fetchBookAndReviews() // Refresh reviews
+    } catch (error) {
+      console.error('Error deleting review:', error)
+      showNotification('Gagal menghapus review: ' + error.message, 'error')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setShowForm(false)
+    setIsEditing(false)
+    if (userReview) {
+      setNewReview({
+        review_score: userReview.review_score,
+        review_text: userReview.review_text
+      })
+    } else {
+      setNewReview({ review_score: 5, review_text: '' })
     }
   }
 
@@ -91,120 +147,186 @@ function BookReviews({ bookId }) {
       </div>
     )
   }
-
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Notification */}
       {notification && (
-        <div className={`fixed top-4 right-4 px-4 py-3 rounded shadow-lg z-50 animate-fade-in ${
+        <div className={`fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-50 transition-all duration-300 ${
           notification.type === 'error' 
-            ? 'bg-red-100 border border-red-400 text-red-700' 
-            : 'bg-green-100 border border-green-400 text-green-700'
+            ? 'bg-red-50 border-l-4 border-red-500 text-red-800' 
+            : 'bg-green-50 border-l-4 border-green-500 text-green-800'
         }`}>
-          {notification.message}
-        </div>
-      )}
-
-      {/* Book Header */}
-      {book && (
-        <div className="bg-white rounded-lg shadow border border-red-100 p-6 mb-6">
-          <div className="flex gap-4">
-            {book.image_blob && (
-              <img 
-                src={`data:image/jpeg;base64,${book.image_blob}`} 
-                alt={book.title}
-                className="w-24 h-32 object-cover rounded-lg shadow"
-              />
-            )}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">{book.title}</h1>
-              {/* Hapus deskripsi buku dari header review */}
-              <div className="flex items-center gap-4 mb-3">
-                <div className="flex items-center gap-2">
-                  {renderStars(Math.round(averageRating))}
-                  <span className="text-sm text-gray-600">
-                    {averageRating} ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition font-semibold"
-              >
-                {showForm ? 'Batal Review' : 'Tulis Review'}
-              </button>
-            </div>
+          <div className="flex items-center">
+            <div className={`w-2 h-2 rounded-full mr-3 ${
+              notification.type === 'error' ? 'bg-red-500' : 'bg-green-500'
+            }`}></div>
+            <span className="font-medium">{notification.message}</span>
           </div>
         </div>
       )}
 
-      {/* Review Form (Comment Box) */}
-      {showForm && (
-        <div className="bg-white rounded-lg shadow border border-red-100 p-6 mb-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Tulis Review</h3>
-          <form onSubmit={handleSubmitReview} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">Rating</label>
-              {renderStars(newReview.review_score, true, (rating) => 
-                setNewReview({ ...newReview, review_score: rating })
-              )}
+      {/* Review Statistics Card */}
+      {book && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-red-50 to-red-100 px-6 py-4 border-b border-red-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-1">Review & Rating</h2>
+                <p className="text-sm text-gray-600">Berikan penilaian untuk buku "{book.title}"</p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl font-bold text-red-600">{averageRating}</div>
+                <div className="text-sm text-gray-500">dari 5.0</div>
+              </div>
             </div>
-            {/* Custom Comment Box */}
-            <div className="relative">
-              <textarea
-                value={newReview.review_text}
-                onChange={(e) => setNewReview({ ...newReview, review_text: e.target.value })}
-                placeholder="Berikan ulasan"
-                rows={4}
-                className="w-full border border-gray-200 rounded-2xl px-4 py-3 pr-12 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white placeholder-gray-300 resize-none text-base"
-                style={{ minHeight: '80px' }}
-              />
-              <button
-                type="submit"
-                className="absolute bottom-2 right-2 p-2 rounded-full hover:bg-gray-100 transition"
-                aria-label="Kirim Komentar"
-              >
-                <PaperAirplaneIcon className="h-6 w-6 text-gray-400 rotate-90" />
-              </button>
-            </div>
-          </form>
+          </div>
+          
+          <div className="p-6">            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                {renderStars(Math.round(averageRating))}
+                <span className="text-sm font-medium text-gray-600">
+                  {reviews.length} ulasan
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {userReview && !showForm ? (
+                  // Show edit/delete buttons if user already has a review
+                  <>
+                    <button
+                      onClick={handleEditReview}
+                      className="px-4 py-2 rounded-lg font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-all duration-200 flex items-center gap-2"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                      Edit Review
+                    </button>
+                    <button
+                      onClick={handleDeleteReview}
+                      className="px-4 py-2 rounded-lg font-medium text-red-600 bg-red-50 hover:bg-red-100 transition-all duration-200 flex items-center gap-2"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                      Hapus
+                    </button>
+                  </>
+                ) : (
+                  // Show write/cancel button if no review exists or form is showing
+                  <button
+                    onClick={showForm ? handleCancelEdit : () => setShowForm(true)}
+                    className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                      showForm 
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                        : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200'
+                    }`}
+                  >
+                    {showForm ? 'Batal' : '+ Tulis Review'}
+                  </button>
+                )}
+              </div>
+            </div>            {/* Review Form */}
+            {showForm && (
+              <div className="border-t border-gray-100 pt-6 mt-4">
+                <h4 className="text-lg font-bold text-gray-800 mb-4">
+                  {isEditing ? 'Edit Review Anda' : 'Tulis Review Baru'}
+                </h4>
+                <form onSubmit={handleSubmitReview} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-semibold mb-3 text-gray-800">Berikan Rating</label>
+                    <div className="flex items-center gap-1">
+                      {renderStars(newReview.review_score, true, (rating) => 
+                        setNewReview({ ...newReview, review_score: rating })
+                      )}
+                      <span className="ml-2 text-sm font-medium text-gray-600">
+                        ({newReview.review_score}/5)
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-semibold mb-3 text-gray-800">Tulis Ulasan</label>
+                    <div className="relative">
+                      <textarea
+                        value={newReview.review_text}
+                        onChange={(e) => setNewReview({ ...newReview, review_text: e.target.value })}
+                        placeholder="Bagikan pengalaman Anda tentang buku ini..."
+                        rows={4}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition-all duration-200 text-gray-800 bg-gray-50 placeholder-gray-400 resize-none"
+                        required
+                      />
+                      <button
+                        type="submit"
+                        className="absolute bottom-3 right-3 p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all duration-200 shadow-md"
+                        aria-label={isEditing ? "Update Review" : "Kirim Review"}
+                      >
+                        <PaperAirplaneIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Reviews List */}
-      <div className="bg-white rounded-lg shadow border border-red-100 p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-4">
-          Review ({reviews.length})
-        </h3>
-        {reviews.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">Belum ada review untuk buku ini.</p>
-        ) : (
-          <div className="space-y-6">
-            {reviews.map((review) => (
-              <div key={review.id} className="border-b border-gray-100 pb-4 last:border-b-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-semibold text-gray-800">{review.owner.full_name}</span>
-                  <span className="text-gray-400 text-sm">•</span>
-                  <span className="text-gray-500 text-sm">
-                    {(() => {
-                      const date = new Date(review.created_at);
-                      return isNaN(date.getTime())
-                        ? '-' 
-                        : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: '2-digit' });
-                    })()}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 mb-1">
-                  {renderStars(review.review_score)}
-                  <span className="text-sm text-gray-600">({review.review_score}/5)</span>
-                </div>
-                {review.review_text && (
-                  <p className="text-gray-700 mt-2 whitespace-pre-line">{review.review_text}</p>
-                )}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <span className="w-1 h-6 bg-red-600 rounded-full"></span>
+            Semua Review ({reviews.length})
+          </h3>
+        </div>
+        
+        <div className="p-6">
+          {reviews.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <StarOutlineIcon className="h-8 w-8 text-gray-400" />
               </div>
-            ))}
-          </div>
-        )}
+              <p className="text-gray-500 font-medium mb-2">Belum ada review</p>
+              <p className="text-sm text-gray-400">Jadilah yang pertama memberikan review untuk buku ini</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {reviews.map((review, index) => (
+                <div key={review.id} className={`pb-6 ${index !== reviews.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {review.owner.full_name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold text-gray-900">{review.owner.full_name}</span>
+                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <span className="text-sm text-gray-500">
+                          {(() => {
+                            const date = new Date(review.created_at);
+                            return isNaN(date.getTime())
+                              ? '-' 
+                              : date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                          })()}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-3">
+                        {renderStars(review.review_score)}
+                        <span className="text-sm font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
+                          {review.review_score}/5
+                        </span>
+                      </div>
+                      
+                      {review.review_text && (
+                        <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-red-200">
+                          <p className="text-gray-800 leading-relaxed whitespace-pre-line">{review.review_text}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

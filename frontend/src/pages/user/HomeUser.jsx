@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import NavbarUser from '../../components/NavbarUser'
 import { useNavigate } from 'react-router-dom'
-import { borrowsAPI, booksAPI } from '../../services/api'
+import { borrowsAPI, booksAPI, authAPI } from '../../services/api'
 
 function HomeUser({ onLogout }) {
   const [notification, setNotification] = useState(null)
   const [recentBorrows, setRecentBorrows] = useState([])
   const [recentBooks, setRecentBooks] = useState([])
+  const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
@@ -14,12 +15,22 @@ function HomeUser({ onLogout }) {
     fetchDashboardData()
   }, [])
 
+  useEffect(() => {
+    if (currentUser) {
+      // Debug: log user object to check status property
+      // Remove this after confirming
+      // eslint-disable-next-line no-console
+      console.log('Current user object:', currentUser)
+    }
+  }, [currentUser])
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
-      const [borrowsData, booksData] = await Promise.all([
+      const [borrowsData, booksData, userData] = await Promise.all([
         borrowsAPI.getMyBorrows(),
-        booksAPI.getAllBooks()
+        booksAPI.getAllBooks(),
+        authAPI.getCurrentUser()
       ])
       
       // Get recent borrows (last 3)
@@ -27,6 +38,9 @@ function HomeUser({ onLogout }) {
       
       // Get recent books (last 3 added)
       setRecentBooks(booksData.slice(-3))
+      
+      // Set current user data
+      setCurrentUser(userData)
       
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
@@ -61,9 +75,18 @@ function HomeUser({ onLogout }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="bg-white/90 rounded-2xl p-8 mb-10 shadow-xl border border-red-100 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
-            <h2 className="text-3xl font-extrabold mb-2 text-red-700 flex items-center gap-2">👋 Halo, Mahasiswa!</h2>
+            <h2 className="text-3xl font-extrabold mb-2 text-red-700 flex items-center gap-2">
+              👋 Halo, {currentUser?.full_name || 'Mahasiswa'}!
+            </h2>
             <p className="text-lg text-gray-700 opacity-80">Selamat datang di <span className="font-bold text-red-600">E-PERSMIP</span> — layanan peminjaman buku digital Perpustakaan MIPA Unhas.</p>
             <p className="mt-2 text-base text-gray-500">Ayo cari, pinjam, dan kelola koleksi bukumu dengan mudah!</p>
+            {/* Non-active user warning (now inside the card) */}
+            {currentUser && (currentUser.status !== 'active' && currentUser.status !== true) && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl shadow-md mt-4 flex items-center gap-3">
+                <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span className="font-semibold">Akun Anda saat ini <span className="underline">tidak aktif</span>. Anda tidak dapat meminjam buku. Silakan hubungi admin untuk mengaktifkan akun Anda.</span>
+              </div>
+            )}
           </div>
           <div className="hidden md:block text-7xl">📚</div>
         </div>

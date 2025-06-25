@@ -2,9 +2,9 @@ import { useState } from "react";
 import unhasLogo from "../../assets/unhas-logo.png";
 import bgUnhas from "../../assets/bg_unhas.png";
 
-const Register = ({ onSwitchToLogin, onRegister, isLoading }) => {
-    const [formData, setFormData] = useState({
+const Register = ({ onSwitchToLogin, onRegister, isLoading }) => {    const [formData, setFormData] = useState({
         name: "",
+        nim: "",
         email: "",
         password: "",
     });
@@ -37,8 +37,7 @@ const Register = ({ onSwitchToLogin, onRegister, isLoading }) => {
                     </div>
                     <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">Daftar Akun</h2>
                     <p className="text-gray-600 mb-6 text-center">Buat akun baru Anda</p>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
+                    <form onSubmit={handleSubmit} className="space-y-6">                        <div>
                             <label htmlFor="register-name" className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
                             <input id="register-name" name="name" type="text" required value={formData.name} onChange={handleChange} 
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-base text-black placeholder-gray-400 transition-colors autofill:bg-white autofill:text-black" 
@@ -46,12 +45,19 @@ const Register = ({ onSwitchToLogin, onRegister, isLoading }) => {
                                 placeholder="Nama Lengkap" />
                         </div>
                         <div>
+                            <label htmlFor="register-nim" className="block text-sm font-medium text-gray-700">NIM</label>
+                            <input id="register-nim" name="nim" type="text" required value={formData.nim} onChange={handleChange} 
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-base text-black placeholder-gray-400 transition-colors autofill:bg-white autofill:text-black" 
+                                style={{ WebkitTextFillColor: '#111', backgroundColor: '#fff', color: '#111', caretColor: '#111' }}
+                                placeholder="Nomor Induk Mahasiswa" />
+                        </div>
+                        <div>
                             <label htmlFor="register-email" className="block text-sm font-medium text-gray-700">Email</label>
                             <input id="register-email" name="email" type="email" required value={formData.email} onChange={handleChange} 
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-base text-black placeholder-gray-400 transition-colors autofill:bg-white autofill:text-black" 
                                 style={{ WebkitTextFillColor: '#111', backgroundColor: '#fff', color: '#111', caretColor: '#111' }}
                                 placeholder="Email" />
-                        </div>                        <div>
+                        </div><div>
                             <label htmlFor="register-password" className="block text-sm font-medium text-gray-700">Password</label>
                             <input id="register-password" name="password" type="password" required value={formData.password} onChange={handleChange} 
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white text-base text-black placeholder-gray-400 transition-colors autofill:bg-white autofill:text-black" 
