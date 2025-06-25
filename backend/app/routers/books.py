@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Form, File, UploadFile, HTTPException
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from .. import crud, schemas, dependencies, models
+from app import crud, schemas, dependencies, models
 
 router_books = APIRouter(prefix="/api/v1/books", tags=["Books"])
 

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from typing import List
-from .. import crud, schemas, dependencies
-from ..core import security
+from app import crud, schemas, dependencies
+from app.core import security
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 

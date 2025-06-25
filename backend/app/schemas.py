@@ -31,7 +31,7 @@ class UserInResponse(BaseModel):
     nim: Optional[str] = None
     full_name: str
     class Config:
-        from_attributes = True
+        from_attributes = True 
 
 # Skema lengkap untuk user yang login
 class User(UserBase):
@@ -39,7 +39,7 @@ class User(UserBase):
     role: str
     is_active: bool
     class Config:
-        from_attributes = True
+        from_attributes = True 
 
 # --- Skema untuk Review ---
 class ReviewBase(BaseModel):
@@ -55,7 +55,7 @@ class Review(ReviewBase):
     owner: UserInResponse # Menampilkan data user yang membuat review
     created_at: datetime  # Tambahkan tanggal pembuatan review
     class Config:
-        from_attributes = True
+        from_attributes = True 
 
 # --- Skema untuk Book ---
 # Skema ini tidak akan digunakan langsung sebagai JSON body untuk endpoint create/update
@@ -66,6 +66,16 @@ class BookBase(BaseModel):
     amount: int = Field(..., ge=0)
     publisher: Optional[str]
     published_date: Optional[str] = None
+
+class BookInList(BaseModel):
+    id: int
+    title: str
+    image: Optional[str]
+    amount: int
+    authors: List["Author"] = []
+    categories: List["Category"] = []
+    class Config:
+        from_attributes = True 
 
 class BookCreate(BookBase):
     # Tidak lagi butuh ID di sini, karena akan dibuat otomatis
@@ -87,17 +97,17 @@ class Book(BookBase):
     authors: List["Author"] = []
     categories: List["Category"] = []
     class Config:
-        from_attributes = True
+        from_attributes = True 
 
 class Author(BaseModel):
     name: str
     class Config:
-        from_attributes = True
+        from_attributes = True 
 
 class Category(BaseModel):
     name: str
     class Config:
-        from_attributes = True
+        from_attributes = True 
 
 # --- Skema untuk BookInList (untuk response di Borrow) ---
 class BookInList(BaseModel):
@@ -123,7 +133,7 @@ class Borrow(BorrowBase):
     book: BookInList
     borrower: UserInResponse  # Tambahkan relasi user (borrower)
     class Config:
-        from_attributes = True
+        from_attributes = True 
 
 class BorrowAdminUpdate(BaseModel):
     status: str

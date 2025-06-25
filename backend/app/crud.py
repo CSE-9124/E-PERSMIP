@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
-from . import models, schemas
-from .core.security import get_password_hash
+from app import models, schemas
 from typing import Optional, List
+from app.core.security import get_password_hash
 
 # --- User CRUD ---
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
