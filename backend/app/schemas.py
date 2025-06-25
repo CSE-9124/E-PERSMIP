@@ -13,6 +13,7 @@ class TokenData(BaseModel):
 # --- Skema untuk User ---
 class UserBase(BaseModel):
     email: str
+    nim: Optional[str] = None  # NIM mahasiswa
     full_name: str
 
 class UserCreate(UserBase):
@@ -27,6 +28,7 @@ class UserUpdate(BaseModel):
 class UserInResponse(BaseModel):
     id: int
     email: str
+    nim: Optional[str] = None
     full_name: str
     class Config:
         from_attributes = True
@@ -35,6 +37,7 @@ class UserInResponse(BaseModel):
 class User(UserBase):
     id: int
     role: str
+    is_active: bool
     class Config:
         from_attributes = True
 

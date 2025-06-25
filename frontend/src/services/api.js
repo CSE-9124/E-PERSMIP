@@ -74,12 +74,12 @@ export const authAPI = {
       console.error('Login error:', error);
       throw new Error(error.response?.data?.detail || 'Login failed');
     }
-  },
-  // Register function
-  register: async (name, email, password) => {
+  },  // Register function
+  register: async (name, nim, email, password) => {
     try {
       const response = await api.post('/api/v1/auth/register', {
         full_name: name,
+        nim,
         email,
         password,
       });
@@ -203,6 +203,26 @@ export const reviewsAPI = {
       return response.data;
     } catch (error) {
       console.error('Get reviews error:', error);
+      throw error;
+    }
+  },
+
+  updateReview: async (reviewId, reviewData) => {
+    try {
+      const response = await api.put(`/api/v1/reviews/${reviewId}`, reviewData);
+      return response.data;
+    } catch (error) {
+      console.error('Update review error:', error);
+      throw error;
+    }
+  },
+
+  deleteReview: async (reviewId) => {
+    try {
+      const response = await api.delete(`/api/v1/reviews/${reviewId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete review error:', error);
       throw error;
     }
   },

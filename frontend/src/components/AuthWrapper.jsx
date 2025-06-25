@@ -47,13 +47,13 @@ const AuthWrapper = ({ onLogin }) => {
   const handleRegister = async (formData) => {
     setIsLoading(true)
     setError(null)
-    
-    // Validasi sederhana: pastikan semua field terisi dan string
+      // Validasi sederhana: pastikan semua field terisi dan string
     const email = (formData.email || '').trim()
     const full_name = (formData.name || '').trim()
+    const nim = (formData.nim || '').trim()
     const password = (formData.password || '').trim()
     
-    if (!email || !full_name || !password) {
+    if (!email || !full_name || !nim || !password) {
       setError('Semua field wajib diisi!')
       setIsLoading(false)
       return
@@ -75,7 +75,7 @@ const AuthWrapper = ({ onLogin }) => {
     }
     
     try {
-      await authAPI.register(full_name, email, password)
+      await authAPI.register(full_name, nim, email, password)
       setSuccess('Registrasi berhasil! Silakan login.')
       setIsLogin(true)
       setTimeout(() => setSuccess(null), 3000)
