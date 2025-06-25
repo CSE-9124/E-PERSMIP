@@ -1,15 +1,52 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import NavbarUser from '../../components/NavbarUser'
 import { useNavigate } from 'react-router-dom'
+import { borrowsAPI, booksAPI } from '../../services/api'
 
 function HomeUser({ onLogout }) {
   const [notification, setNotification] = useState(null)
+  const [recentBorrows, setRecentBorrows] = useState([])
+  const [recentBooks, setRecentBooks] = useState([])
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      const [borrowsData, booksData] = await Promise.all([
+        borrowsAPI.getMyBorrows(),
+        booksAPI.getAllBooks()
+      ])
+      
+      // Get recent borrows (last 3)
+      setRecentBorrows(borrowsData.slice(0, 3))
+      
+      // Get recent books (last 3 added)
+      setRecentBooks(booksData.slice(-3))
+      
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Fungsi untuk notifikasi
   const showNotification = (msg, duration = 3000) => {
     setNotification(msg)
     setTimeout(() => setNotification(null), duration)
+  }
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
   return (
@@ -41,14 +78,6 @@ function HomeUser({ onLogout }) {
                 <button className="btn bg-red-600 text-white hover:bg-red-700 font-semibold px-6 py-2 rounded-xl shadow" onClick={() => navigate('/user/borrow')}>Pinjam</button>
               </div>
             </div>
-            <div className="card bg-white shadow-xl hover:shadow-2xl transition-shadow duration-300 border-t-4 border-pink-400">
-              <div className="card-body items-center text-center">
-                <div className="text-4xl mb-2">🔍</div>
-                <h2 className="card-title text-pink-700 text-xl font-bold mb-1">Cari Buku</h2>
-                <p className="text-gray-600 opacity-80 mb-3">Temukan koleksi buku terbaru</p>
-                <button className="btn bg-pink-500 text-white hover:bg-pink-600 font-semibold px-6 py-2 rounded-xl shadow" onClick={() => navigate('/user/search')}>Cari</button>
-              </div>
-            </div>
             <div className="card bg-white shadow-xl hover:shadow-2xl transition-shadow duration-300 border-t-4 border-yellow-400">
               <div className="card-body items-center text-center">
                 <div className="text-4xl mb-2">📋</div>
@@ -58,23 +87,83 @@ function HomeUser({ onLogout }) {
               </div>
             </div>
           </div>
-        </div>
-        <div className="bg-white/90 rounded-2xl p-8 shadow-xl border border-red-100 mb-8">
-          <h3 className="text-xl font-bold mb-6 text-red-700 flex items-center gap-2"><span className="text-2xl">🕒</span> Aktivitas Terbaru</h3>
-          <ul className="space-y-4">
-            <li className="flex items-center p-4 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-400 shadow-sm">
-              <span className="w-3 h-3 bg-blue-400 rounded-full mr-4"></span>
-              <span className="text-gray-700">Buku <b>"Algoritma dan Struktur Data"</b> dikembalikan</span>
-            </li>
-            <li className="flex items-center p-4 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-400 shadow-sm">
-              <span className="w-3 h-3 bg-green-400 rounded-full mr-4"></span>
-              <span className="text-gray-700">Buku baru <b>"Machine Learning"</b> ditambahkan</span>
-            </li>
-            <li className="flex items-center p-4 rounded-lg bg-gradient-to-r from-yellow-50 to-yellow-100 border-l-4 border-yellow-400 shadow-sm">
-              <span className="w-3 h-3 bg-yellow-400 rounded-full mr-4"></span>
-              <span className="text-gray-700">Pengingat: 3 buku akan jatuh tempo besok</span>
-            </li>
-          </ul>
+        </div>        <div className="bg-white/90 rounded-2xl p-8 shadow-xl border border-red-100 mb-8">
+          <h3 className="text-xl font-bold mb-6 text-red-700 flex items-center gap-2">
+            <span className="text-2xl">🕒</span> Aktivitas Terbaru
+          </h3>
+          
+          {loading ? (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Memuat aktivitas...</p>
+            </div>
+          ) : (
+            <>
+              {/* Recent Borrows */}
+              {recentBorrows.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Peminjaman Terbaru</h4>
+                  <div className="space-y-3">
+                    {recentBorrows.map((borrow) => (
+                      <div key={borrow.id} className="flex items-center p-3 rounded-lg bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-400 shadow-sm">
+                        <span className="w-3 h-3 bg-blue-400 rounded-full mr-4"></span>
+                        <div className="flex-1">
+                          <span className="text-gray-700">
+                            Buku <b>"{borrow.buku?.title || 'Judul Tidak Tersedia'}"</b> 
+                            {borrow.tanggal_kembali ? ' telah dikembalikan' : ' sedang dipinjam'}
+                          </span>
+                          <div className="text-sm text-gray-500 mt-1">
+                            Dipinjam: {formatDate(borrow.tanggal_pinjam)}
+                            {borrow.tanggal_kembali && (
+                              <span> • Dikembalikan: {formatDate(borrow.tanggal_kembali)}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Books */}
+              {recentBooks.length > 0 && (
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-800 mb-3">Buku Terbaru di Perpustakaan</h4>
+                  <div className="space-y-3">
+                    {recentBooks.map((book) => (
+                      <div key={book.id} className="flex items-center p-3 rounded-lg bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-400 shadow-sm">
+                        <span className="w-3 h-3 bg-green-400 rounded-full mr-4"></span>
+                        <div className="flex-1">
+                          <span className="text-gray-700">
+                            Buku baru <b>"{book.title}"</b> telah ditambahkan ke koleksi
+                          </span>
+                          {book.authors && book.authors.length > 0 && (
+                            <div className="text-sm text-gray-500 mt-1">
+                              Penulis: {book.authors.map(a => a.name).join(', ')}
+                            </div>
+                          )}
+                        </div>
+                        <button 
+                          onClick={() => navigate(`/user/book/${book.id}`)}
+                          className="text-green-600 hover:text-green-700 font-semibold text-sm"
+                        >
+                          Lihat Detail
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No Activity */}
+              {recentBorrows.length === 0 && recentBooks.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <span className="text-4xl block mb-2">📚</span>
+                  Belum ada aktivitas. Mulai pinjam buku untuk melihat aktivitas Anda!
+                </div>
+              )}
+            </>
+          )}
         </div>
       </main>
     </div>

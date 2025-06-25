@@ -6,8 +6,9 @@ import UserManagement from './pages/admin/UserManagement'
 import Statistics from './pages/admin/Statistics'
 import AuthWrapper from './components/AuthWrapper'
 import BorrowBook from './pages/user/BorrowBook'
-import SearchBook from './pages/user/SearchBook'
 import BorrowHistory from './pages/user/BorrowHistory'
+import BookDetail from './pages/user/BookDetail'
+import BorrowManagement from './pages/admin/BorrowManagement'
 
 const AppRoutes = ({ isAuthenticated, role, setIsAuthenticated, setRole, handleLoginSuccess, handleLogout }) => {
   // Route protection wrapper
@@ -40,25 +41,29 @@ const AppRoutes = ({ isAuthenticated, role, setIsAuthenticated, setRole, handleL
           <Statistics />
         </RequireAuth>
       } />
+      <Route path="/admin/borrows" element={
+        <RequireAuth allowedRole="admin">
+          <BorrowManagement />
+        </RequireAuth>
+      } />
       {/* User routes */}
       <Route path="/user/home" element={
         <RequireAuth allowedRole="user">
           <HomeUser onLogout={handleLogout} />
         </RequireAuth>
-      } />
-      <Route path="/user/borrow" element={
+      } />      <Route path="/user/borrow" element={
         <RequireAuth allowedRole="user">
-          <BorrowBook />
+          <BorrowBook onLogout={handleLogout} />
         </RequireAuth>
       } />
-      <Route path="/user/search" element={
+      <Route path="/user/book/:bookId" element={
         <RequireAuth allowedRole="user">
-          <SearchBook />
+          <BookDetail onLogout={handleLogout} />
         </RequireAuth>
       } />
       <Route path="/user/history" element={
         <RequireAuth allowedRole="user">
-          <BorrowHistory />
+          <BorrowHistory onLogout={handleLogout} />
         </RequireAuth>
       } />
       <Route path="/" element={

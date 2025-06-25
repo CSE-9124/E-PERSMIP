@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppRoutes from './AppRoutes'
 import './App.css'
 
@@ -7,6 +8,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access_token'))
   const [role, setRole] = useState(localStorage.getItem('user_role') || '')
   const [isLoading, setIsLoading] = useState(true)
+  const navigate = useNavigate();
 
   // Sync state dengan localStorage saat mount dan saat login/logout
   useEffect(() => {
@@ -35,6 +37,7 @@ function App() {
     localStorage.removeItem('user_role')
     setIsAuthenticated(false)
     setRole('')
+    navigate('/')
   }
 
   if (isLoading) {

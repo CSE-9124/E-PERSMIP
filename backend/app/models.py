@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 from sqlalchemy import (Column, Integer, String, ForeignKey, Text, Enum, DateTime,
-                        Float, Table, UniqueConstraint, Index, LargeBinary)
+                        Float, Table, UniqueConstraint, Index, LargeBinary, Boolean)
 from sqlalchemy.orm import relationship, declarative_base
 
 Base = declarative_base()
@@ -24,7 +24,7 @@ class User(Base):
     full_name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(Enum("user", "admin", name="role_enum"), default="user")
-    
+    is_active = Column(Integer, default=1)
     reviews = relationship("Review", back_populates="owner")
     borrows = relationship("Borrow", back_populates="borrower")
 
@@ -63,7 +63,7 @@ class Review(Base):
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
     review_score = Column(Float, nullable=False)
     review_text = Column(Text, nullable=True)
-    
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     owner = relationship("User", back_populates="reviews")
     book = relationship("Book", back_populates="reviews")
 
@@ -76,18 +76,17 @@ class Borrow(Base):
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     borrow_date = Column(DateTime, default=datetime.utcnow)
-    status = Column(Enum("dipinjam", "dikembalikan", name="status_peminjaman_enum"), default="dipinjam", nullable=False)
-    
+    return_date = Column(DateTime, nullable=True)  # Tanggal kembali
+    status = Column(Enum("menunggu", "disetujui", "dipinjam", "dikembalikan", "ditolak", name="status_peminjaman_enum"), default="menunggu", nullable=False)
     book = relationship("Book", back_populates="borrows")
     borrower = relationship("User", back_populates="borrows")
 
     # ATURAN: Satu user hanya bisa meminjam satu buku aktif pada satu waktu.
     __table_args__ = (
         Index(
-            'ix_unique_active_borrow_per_user', # Nama index
+            'ix_unique_active_borrow_per_user',
             user_id,                   
             unique=True,
-            # Kondisi WHERE: Aturan unik ini HANYA berlaku untuk baris...
-            sqlite_where=(status == 'dipinjam')      # ...dimana status='dipinjam'
+            sqlite_where=(status == 'dipinjam')
         ),
     )

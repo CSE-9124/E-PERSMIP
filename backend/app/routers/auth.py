@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
+from typing import List
 from .. import crud, schemas, dependencies
 from ..core import security
 
@@ -27,3 +28,37 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(dependencies.g
 @router.get("/users/me", response_model=schemas.User)
 def read_users_me(current_user: schemas.User = Depends(dependencies.get_current_user)):
     return current_user
+
+# Admin only endpoints
+@router.get("/users", response_model=List[schemas.User])
+def get_all_users(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(dependencies.get_db),
+    current_user: schemas.User = Depends(dependencies.get_current_admin_user)
+):
+    return crud.get_users(db, skip=skip, limit=limit)
+
+@router.put("/users/{user_id}", response_model=schemas.User)
+def update_user(
+    user_id: int,
+    user_update: schemas.UserUpdate,
+    db: Session = Depends(dependencies.get_db),
+    current_user: schemas.User = Depends(dependencies.get_current_admin_user)
+):
+    db_user = crud.get_user_by_id(db, user_id=user_id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return crud.update_user(db=db, db_user=db_user, user_in=user_update)
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(dependencies.get_db),
+    current_user: schemas.User = Depends(dependencies.get_current_admin_user)
+):
+    db_user = crud.get_user_by_id(db, user_id=user_id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    crud.delete_user(db=db, user_id=user_id)
+    return {"message": "User deleted successfully"}

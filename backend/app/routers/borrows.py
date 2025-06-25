@@ -29,3 +29,24 @@ def read_my_borrows(db: Session = Depends(dependencies.get_db), current_user: mo
 @router_borrows.get("/all", response_model=List[schemas.Borrow])
 def read_all_borrows(db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
     return crud.get_all_borrows(db)
+
+@router_borrows.put("/{borrow_id}/approve", response_model=schemas.Borrow)
+def approve_borrow_request(borrow_id: int, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
+    approved = crud.approve_borrow(db, borrow_id=borrow_id)
+    if not approved:
+        raise HTTPException(status_code=404, detail="Borrow request not found or already processed.")
+    return approved
+
+@router_borrows.put("/{borrow_id}/decline", response_model=schemas.Borrow)
+def decline_borrow_request(borrow_id: int, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
+    declined = crud.decline_borrow(db, borrow_id=borrow_id)
+    if not declined:
+        raise HTTPException(status_code=404, detail="Borrow request not found or already processed.")
+    return declined
+
+@router_borrows.put("/{borrow_id}/admin-update", response_model=schemas.Borrow)
+def admin_update_borrow(borrow_id: int, update_data: schemas.BorrowAdminUpdate, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
+    updated_borrow = crud.admin_update_borrow(db, borrow_id=borrow_id, update_data=update_data)
+    if not updated_borrow:
+        raise HTTPException(status_code=404, detail="Borrow record not found.")
+    return updated_borrow
