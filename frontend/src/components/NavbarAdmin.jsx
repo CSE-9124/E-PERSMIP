@@ -7,6 +7,7 @@ const navLinks = [
   { to: '/admin/books', label: 'Kelola Buku' },
   { to: '/admin/users', label: 'Kelola User' },
   { to: '/admin/statistics', label: 'Statistik' },
+  { to: '/admin/borrows', label: 'Kelola Peminjaman' },
 ]
 
 function NavbarAdmin() {
@@ -22,6 +23,19 @@ function NavbarAdmin() {
               <p className="text-sm md:text-base text-white opacity-90 font-medium">Universitas Hasanuddin</p>
             </div>
           </div>
+          <nav className="flex items-center space-x-2 mr-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`px-4 py-2 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-white/20 hover:text-white ${
+                  location.pathname === link.to ? 'bg-white/30 text-white font-bold' : ''
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
           <div className="flex items-center space-x-4">
             <span className="text-white font-semibold capitalize text-base md:text-lg bg-red-900 bg-opacity-30 px-3 py-1 rounded-xl">Admin</span>
             <button

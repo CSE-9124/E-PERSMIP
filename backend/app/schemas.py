@@ -18,20 +18,25 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+
 # Skema untuk menampilkan info user di dalam response lain (misal: review)
 class UserInResponse(BaseModel):
     id: int
     email: str
     full_name: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Skema lengkap untuk user yang login
 class User(UserBase):
     id: int
     role: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- Skema untuk Review ---
 class ReviewBase(BaseModel):
@@ -45,8 +50,9 @@ class Review(ReviewBase):
     id: int
     book_id: int
     owner: UserInResponse # Menampilkan data user yang membuat review
+    created_at: datetime  # Tambahkan tanggal pembuatan review
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- Skema untuk Book ---
 # Skema ini tidak akan digunakan langsung sebagai JSON body untuk endpoint create/update
@@ -56,7 +62,7 @@ class BookBase(BaseModel):
     description: Optional[str]
     amount: int = Field(..., ge=0)
     publisher: Optional[str]
-    published_date: Optional[str]
+    published_date: Optional[str] = None
 
 class BookCreate(BookBase):
     # Tidak lagi butuh ID di sini, karena akan dibuat otomatis
@@ -78,17 +84,17 @@ class Book(BookBase):
     authors: List["Author"] = []
     categories: List["Category"] = []
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Author(BaseModel):
     name: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Category(BaseModel):
     name: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- Skema untuk BookInList (untuk response di Borrow) ---
 class BookInList(BaseModel):
@@ -96,7 +102,7 @@ class BookInList(BaseModel):
     title: str
     image: Optional[str] = None
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- Skema untuk Borrow ---
 class BorrowBase(BaseModel):
@@ -109,7 +115,13 @@ class Borrow(BorrowBase):
     id: int
     user_id: int
     borrow_date: datetime
+    return_date: Optional[datetime] = None  # Tanggal kembali
     status: str
     book: BookInList
+    borrower: UserInResponse  # Tambahkan relasi user (borrower)
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class BorrowAdminUpdate(BaseModel):
+    status: str
+    return_date: Optional[str] = None

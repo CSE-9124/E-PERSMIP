@@ -47,3 +47,6 @@ def require_admin_role(current_user: models.User = Depends(get_current_user)) ->
             detail="The user does not have privileges to perform this action",
         )
     return current_user
+
+# Alias untuk kemudahan penamaan
+get_current_admin_user = require_admin_role
