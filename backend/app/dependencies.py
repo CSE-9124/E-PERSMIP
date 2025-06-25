@@ -3,9 +3,9 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 
-from . import crud, models, schemas
-from .core.security import SECRET_KEY, ALGORITHM
-from .database import SessionLocal
+from app import crud, models, schemas
+from app.core.security import SECRET_KEY, ALGORITHM
+from app.database import SessionLocal
 
 # Skema untuk memberitahu FastAPI endpoint mana yang butuh token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/token")

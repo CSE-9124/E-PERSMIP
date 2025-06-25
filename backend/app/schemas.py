@@ -24,14 +24,14 @@ class UserInResponse(BaseModel):
     email: str
     full_name: str
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 # Skema lengkap untuk user yang login
 class User(UserBase):
     id: int
     role: str
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 # --- Skema untuk Review ---
 class ReviewBase(BaseModel):
@@ -46,7 +46,7 @@ class Review(ReviewBase):
     book_id: int
     owner: UserInResponse # Menampilkan data user yang membuat review
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 # --- Skema untuk Book ---
 # Skema ini tidak akan digunakan langsung sebagai JSON body untuk endpoint create/update
@@ -57,6 +57,16 @@ class BookBase(BaseModel):
     amount: int = Field(..., ge=0)
     publisher: Optional[str]
     published_date: Optional[str]
+
+class BookInList(BaseModel):
+    id: int
+    title: str
+    image: Optional[str]
+    amount: int
+    authors: List["Author"] = []
+    categories: List["Category"] = []
+    class Config:
+        from_attributes = True 
 
 class BookCreate(BookBase):
     # Tidak lagi butuh ID di sini, karena akan dibuat otomatis
@@ -78,17 +88,17 @@ class Book(BookBase):
     authors: List["Author"] = []
     categories: List["Category"] = []
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 class Author(BaseModel):
     name: str
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 class Category(BaseModel):
     name: str
     class Config:
-        orm_mode = True
+        from_attributes = True 
 
 # --- Skema untuk Borrow ---
 class BorrowBase(BaseModel):
@@ -104,4 +114,4 @@ class Borrow(BorrowBase):
     status: str
     book: BookInList
     class Config:
-        orm_mode = True
+        from_attributes = True 

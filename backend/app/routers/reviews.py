@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from sqlalchemy.orm import Session
-from .. import crud, schemas, models, dependencies
+from app import crud, schemas, models, dependencies
 
 router_reviews = APIRouter(prefix="/api/v1", tags=["Reviews"])
 
