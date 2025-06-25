@@ -14,6 +14,26 @@ html, body {
   overflow-x: hidden;
 }
 
+/* Hide scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+
+/* Hide scrollbar for Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* Hide scrollbar for IE/Edge */
+* {
+  -ms-overflow-style: none;
+}
+
 #root {
   height: 100%;
   width: 100%;
@@ -28,15 +48,32 @@ html, body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  --b1: #fff !important;
+  --b2: #fff !important;
+  --b3: #fff !important;
+  --bc: #991b1b !important;
+  --n: #f3f4f6 !important;
+  --n-bc: #991b1b !important;
+  --p: #be123c !important;
+  --pf: #fff !important;
+  --s: #fca5a5 !important;
+  --sf: #be123c !important;
+  --a: #f59e0b !important;
+  --af: #fff !important;
+  --in: #0ea5e9 !important;
+  --su: #22c55e !important;
+  --wa: #f59e0b !important;
+  --er: #ef4444 !important;
 }
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #be123c;
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: #991b1b;
 }
 
 body {
@@ -69,6 +106,17 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+[data-theme] .dropdown-content, .dropdown-content {
+  background: #fff !important;
+  color: #be123c !important;
+}
+
+/* Pastikan tidak ada bg-black, text-black, atau dark mode */
+.bg-black, .text-black, .dark, [data-theme="dark"] {
+  background: #fff !important;
+  color: #be123c !important;
 }
 
 @media (prefers-color-scheme: light) {

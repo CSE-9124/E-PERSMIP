@@ -1,63 +1,63 @@
-import { useState } from 'react'
-import AuthToggle from './components/AuthToggle'
-import Home from './components/Home'
-import GuestHome from './components/GuestHome'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import AppRoutes from './AppRoutes'
 import './App.css'
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [showLogin, setShowLogin] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(false)
+  // Inisialisasi dari localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access_token'))
+  const [role, setRole] = useState(localStorage.getItem('user_role') || '')
+  const [isLoading, setIsLoading] = useState(true)
+  const navigate = useNavigate();
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
-  }
+  // Sync state dengan localStorage saat mount dan saat login/logout
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('access_token')
+      const savedRole = localStorage.getItem('user_role')
+      setIsAuthenticated(!!token)
+      setRole(savedRole || '')
+      setIsLoading(false)
+    }
+    checkAuth()
+    // Event listener untuk perubahan localStorage (misal: di tab lain)
+    window.addEventListener('storage', checkAuth)
+    return () => window.removeEventListener('storage', checkAuth)
+  }, [])
 
-  const handleLogin = () => {
-    setShowLogin(true)
-  }
-
-  const handleLoginSuccess = () => {
+  // Dipanggil setelah login sukses
+  const handleLoginSuccess = (userRole) => {
     setIsAuthenticated(true)
-    setShowLogin(false)
+    setRole(userRole)
   }
 
-  const handleBackToGuest = () => {
-    setShowLogin(false)
+  // Logout
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('user_role')
+    setIsAuthenticated(false)
+    setRole('')
+    navigate('/')
   }
 
-  // Show login form
-  if (showLogin) {
+  if (isLoading) {
     return (
-      <AuthToggle 
-        onLogin={handleLoginSuccess} 
-        onBack={handleBackToGuest}
-        isDarkMode={isDarkMode}
-        toggleTheme={toggleTheme}
-      />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
     )
   }
-
-  // Show authenticated home
-  if (isAuthenticated) {
-    return (
-      <Home 
-        toggleTheme={toggleTheme} 
-        isDarkMode={isDarkMode} 
-        onLogout={() => {
-          setIsAuthenticated(false)
-          setShowLogin(false)
-        }} 
-      />
-    )
-  }
-
-  // Show guest home (default)
   return (
-    <GuestHome 
-      toggleTheme={toggleTheme} 
-      isDarkMode={isDarkMode} 
-      onLogin={handleLogin}
+    <AppRoutes
+      isAuthenticated={isAuthenticated}
+      role={role}
+      setIsAuthenticated={setIsAuthenticated}
+      setRole={setRole}
+      handleLoginSuccess={handleLoginSuccess}
+      handleLogout={handleLogout}
     />
   )
 }

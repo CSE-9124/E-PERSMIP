@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app import models
 from app.database import engine
-from app.routers import auth, books, reviews, borrows
+from app.routers import auth, books, reviews, borrows, statistics
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -13,10 +13,17 @@ app = FastAPI(
 )
 
 # Konfigurasi CORS (Cross-Origin Resource Sharing)
-# Mengizinkan frontend React (localhost:5173) untuk mengakses API ini
+# Mengizinkan frontend React untuk mengakses API ini
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174", 
+        "http://localhost:5175",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5175"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,6 +34,7 @@ app.include_router(auth.router)
 app.include_router(books.router_books)
 app.include_router(reviews.router_reviews)
 app.include_router(borrows.router_borrows)
+app.include_router(statistics.router)
 
 
 @app.get("/", tags=["Root"])

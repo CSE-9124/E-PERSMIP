@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, File, UploadFile
+from fastapi import APIRouter, Depends, Form, File, UploadFile, HTTPException
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from app import crud, schemas, dependencies, models
@@ -6,7 +6,7 @@ from app import crud, schemas, dependencies, models
 router_books = APIRouter(prefix="/api/v1/books", tags=["Books"])
 
 # Endpoint GET (publik)
-@router_books.get("/", response_model=List[schemas.BookInList])
+@router_books.get("/", response_model=List[schemas.Book])
 def read_books(skip: int = 0, limit: int = 20, db: Session = Depends(dependencies.get_db)):
     books = crud.get_books(db, skip=skip, limit=limit)
     return books
@@ -28,6 +28,7 @@ async def create_book(
     description: Optional[str] = Form(None),
     amount: int = Form(...),
     publisher: Optional[str] = Form(None),
+    published_date: Optional[str] = Form(None),
     # Gambar diupload sebagai file
     image: Optional[UploadFile] = File(None)
 ):
@@ -42,7 +43,8 @@ async def create_book(
         title=title,
         description=description,
         amount=amount,
-        publisher=publisher
+        publisher=publisher,
+        published_date=published_date
     )
     
     return crud.create_book(db=db, book=book_in, image_blob=image_bytes)
@@ -58,6 +60,7 @@ async def update_book(
     description: Optional[str] = Form(None),
     amount: Optional[int] = Form(None),
     publisher: Optional[str] = Form(None),
+    published_date: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None)
 ):
     db_book = crud.get_book(db, book_id=book_id)
@@ -71,6 +74,7 @@ async def update_book(
         description=description,
         amount=amount,
         publisher=publisher,
+        published_date=published_date
     )
     return crud.update_book(db, db_book=db_book, book_in=book_in, image_blob=image_bytes)
 

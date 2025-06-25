@@ -13,15 +13,22 @@ class TokenData(BaseModel):
 # --- Skema untuk User ---
 class UserBase(BaseModel):
     email: str
+    nim: Optional[str] = None  # NIM mahasiswa
     full_name: str
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
 
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
+
 # Skema untuk menampilkan info user di dalam response lain (misal: review)
 class UserInResponse(BaseModel):
     id: int
     email: str
+    nim: Optional[str] = None
     full_name: str
     class Config:
         from_attributes = True 
@@ -30,6 +37,7 @@ class UserInResponse(BaseModel):
 class User(UserBase):
     id: int
     role: str
+    is_active: bool
     class Config:
         from_attributes = True 
 
@@ -45,6 +53,7 @@ class Review(ReviewBase):
     id: int
     book_id: int
     owner: UserInResponse # Menampilkan data user yang membuat review
+    created_at: datetime  # Tambahkan tanggal pembuatan review
     class Config:
         from_attributes = True 
 
@@ -56,7 +65,7 @@ class BookBase(BaseModel):
     description: Optional[str]
     amount: int = Field(..., ge=0)
     publisher: Optional[str]
-    published_date: Optional[str]
+    published_date: Optional[str] = None
 
 class BookInList(BaseModel):
     id: int
@@ -100,6 +109,14 @@ class Category(BaseModel):
     class Config:
         from_attributes = True 
 
+# --- Skema untuk BookInList (untuk response di Borrow) ---
+class BookInList(BaseModel):
+    id: int
+    title: str
+    image: Optional[str] = None
+    class Config:
+        from_attributes = True
+
 # --- Skema untuk Borrow ---
 class BorrowBase(BaseModel):
     book_id: int
@@ -111,7 +128,13 @@ class Borrow(BorrowBase):
     id: int
     user_id: int
     borrow_date: datetime
+    return_date: Optional[datetime] = None  # Tanggal kembali
     status: str
     book: BookInList
+    borrower: UserInResponse  # Tambahkan relasi user (borrower)
     class Config:
         from_attributes = True 
+
+class BorrowAdminUpdate(BaseModel):
+    status: str
+    return_date: Optional[str] = None
