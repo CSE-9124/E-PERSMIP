@@ -62,3 +62,23 @@ def delete_user(
         raise HTTPException(status_code=404, detail="User not found")
     crud.delete_user(db=db, user_id=user_id)
     return {"message": "User deleted successfully"}
+
+@router.get('/users/check-email/{email}')
+def check_email_exists(
+    email: str,
+    db: Session = Depends(dependencies.get_db)
+):
+    user = crud.get_user_by_email(db, email=email)
+    if user:
+        return {"exists": True}
+    return {"exists": False}
+
+@router.get('/users/check-nim/{nim}')
+def check_nim_exists(
+    nim: str,
+    db: Session = Depends(dependencies.get_db)
+):
+    user = crud.get_user_by_nim(db, nim=nim)
+    if user:
+        return {"exists": True}
+    return {"exists": False}

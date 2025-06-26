@@ -82,6 +82,7 @@ export const authAPI = {
       const response = await api.post('/api/v1/auth/register', {
         full_name: userData.full_name,
         email: userData.email,
+        nim: userData.nim ? userData.nim : '',
         password: userData.password,
         role: userData.role,
       });
@@ -127,6 +128,28 @@ export const authAPI = {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user_role');
   },
+
+  // Check if email exists
+  checkEmailExists: async (email) => {
+    try {
+      const response = await api.get(`/api/v1/auth/users/check-email/${encodeURIComponent(email)}`);
+      return response.data.exists;
+    } catch (error) {
+      console.error('Check email exists error:', error);
+      throw error;
+    }
+  },
+
+  // Check if NIM exists
+  checkNimExists: async (nim) => {
+    try {
+      const response = await api.get(`/api/v1/auth/users/check-nim/${encodeURIComponent(nim)}`);
+      return response.data.exists;
+    } catch (error) {
+      console.error('Check NIM exists error:', error);
+      throw error;
+    }
+  }
 };
 
 // Books API functions

@@ -34,11 +34,15 @@ const AuthWrapper = ({ onLogin }) => {
         navigate('/admin')
       } else {
         navigate('/user/home')
-        setSuccess('Login berhasil!')
-        setTimeout(() => setSuccess(null), 3000)
       }
+      setTimeout(() => setSuccess('Login berhasil!'), 100)
     } catch (err) {
-      setError(err.message)
+      if (err.response && err.response.status === 401) {
+        setTimeout(() => setError('Email atau password salah!'), 100)
+      } else {
+        setTimeout(() => setError('Terjadi kesalahan saat login!'), 100)
+      }
+      console.error('Login error:', err)
     } finally {
       setIsLoading(false)
     }
@@ -47,21 +51,22 @@ const AuthWrapper = ({ onLogin }) => {
   const handleRegister = async (formData) => {
     setIsLoading(true)
     setError(null)
-      // Validasi sederhana: pastikan semua field terisi dan string
+    // Validasi sederhana: pastikan semua field terisi dan string
     const email = (formData.email || '').trim()
     const full_name = (formData.name || '').trim()
     const nim = (formData.nim || '').trim()
     const password = (formData.password || '').trim()
+    const role = 'user' // Default role to 'user'
     
     if (!email || !full_name || !nim || !password) {
-      setError('Semua field wajib diisi!')
+      setTimeout(() => setError('Semua field harus diisi!'), 100)
       setIsLoading(false)
       return
     }
-    
+
     // Validasi password minimal 8 karakter
     if (password.length < 8) {
-      setError('Password harus minimal 8 karakter!')
+      setTimeout(() => setError("Password harus minimal 8 karakter!"), 100)
       setIsLoading(false)
       return
     }
@@ -69,18 +74,43 @@ const AuthWrapper = ({ onLogin }) => {
     // Validasi email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      setError('Format email tidak valid!')
+      setTimeout(() => setError("Email tidak valid!"), 100)
+      setIsLoading(false)
+      return
+    }
+
+    // Validasi email sudah terdaftar di backend
+    const existingUser = await authAPI.checkEmailExists(email)
+    if (existingUser) {
+      setTimeout(() => setError('Email sudah terdaftar!'), 100)
+      setIsLoading(false)
+      return
+    }
+
+    // Validasi nim sudah terdaftar di backend
+    const existingNim = await authAPI.checkNimExists(nim)
+    if (existingNim) {
+      setTimeout(() => setError('NIM sudah terdaftar!'), 100)
       setIsLoading(false)
       return
     }
     
     try {
-      await authAPI.register(full_name, nim, email, password)
-      setSuccess('Registrasi berhasil! Silakan login.')
-      setIsLogin(true)
-      setTimeout(() => setSuccess(null), 3000)
+      await authAPI.register({
+        full_name: full_name,
+        email: email,
+        nim: nim,
+        password: password,
+        role: role
+      })
+      setTimeout(() => setSuccess('Registrasi berhasil! Silakan login.'), 100)
+      setTimeout(() => setIsLogin(true), 2000)
     } catch (err) {
-      setError(err.message)
+      if (err.response && err.response.status === 400) {
+        setTimeout(() => setError('Email atau NIM sudah terdaftar!'), 100)
+      } else {
+        setTimeout(() => setError('Terjadi kesalahan saat registrasi!'), 100)
+      }
     } finally {
       setIsLoading(false)
     }

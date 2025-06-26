@@ -7,6 +7,9 @@ from app.core.security import get_password_hash
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
     return db.query(models.User).filter(models.User.email == email).first()
 
+def get_user_by_nim(db: Session, nim: str) -> Optional[models.User]:
+    return db.query(models.User).filter(models.User.nim == nim).first()
+
 def get_user_by_id(db: Session, user_id: int) -> Optional[models.User]:
     return db.query(models.User).filter(models.User.id == user_id).first()
 
@@ -20,7 +23,7 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
         nim=user.nim,
         full_name=user.full_name,
         hashed_password=hashed_password,
-        role=user.role or "user"  # Use provided role or default to "user"
+        role=user.role
     )
     db.add(db_user)
     db.commit()
