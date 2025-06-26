@@ -68,11 +68,12 @@ class BookBase(BaseModel):
     publisher: Optional[str]
     published_date: Optional[str] = None
 
+# --- Skema untuk BookInList (untuk response di Borrow dan daftar) ---
 class BookInList(BaseModel):
     id: int
     title: str
-    image: Optional[str]
-    amount: int
+    image: Optional[str] = None
+    amount: int = 0
     authors: List["Author"] = []
     categories: List["Category"] = []
     class Config:
@@ -109,14 +110,6 @@ class Category(BaseModel):
     name: str
     class Config:
         from_attributes = True 
-
-# --- Skema untuk BookInList (untuk response di Borrow) ---
-class BookInList(BaseModel):
-    id: int
-    title: str
-    image: Optional[str] = None
-    class Config:
-        from_attributes = True
 
 # --- Skema untuk Borrow ---
 class BorrowBase(BaseModel):

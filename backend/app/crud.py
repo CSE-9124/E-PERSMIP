@@ -53,7 +53,7 @@ def get_books(db: Session, skip: int = 0, limit: int = 100) -> List[models.Book]
     return db.query(models.Book).options(
         joinedload(models.Book.authors),
         joinedload(models.Book.categories)
-    ).offset(skip).limit(limit).all()
+    ).order_by(models.Book.id.desc()).offset(skip).limit(limit).all()
 
 def create_book(db: Session, book: schemas.BookCreate, image_blob: Optional[bytes] = None) -> models.Book:
     # 1. Menyiapkan data buku dasar

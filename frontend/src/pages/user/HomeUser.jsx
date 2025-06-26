@@ -34,11 +34,15 @@ function HomeUser({ onLogout }) {
         authAPI.getCurrentUser(),
       ]);
 
+      // Debug logging to understand data structure
+      console.log("Borrows data:", borrowsData);
+      console.log("Books data:", booksData);
+
       // Get recent borrows (last 3)
       setRecentBorrows(borrowsData.slice(0, 3));
 
-      // Get recent books (last 3 added)
-      setRecentBooks(booksData.slice(-3));
+      // Get recent books (first 3 from backend - already sorted by ID desc)
+      setRecentBooks(booksData.slice(0, 3));
 
       // Set current user data
       setCurrentUser(userData);
@@ -56,11 +60,24 @@ function HomeUser({ onLogout }) {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    if (!dateString) return "Tanggal tidak tersedia";
+    
+    try {
+      const date = new Date(dateString);
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "Tanggal tidak valid";
+      }
+      
+      return date.toLocaleDateString("id-ID", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Tanggal tidak valid";
+    }
   };
 
   return (
@@ -88,8 +105,7 @@ function HomeUser({ onLogout }) {
             </p>
             {/* Non-active user warning (now inside the card) */}
             {currentUser &&
-              currentUser.status !== "active" &&
-              currentUser.status !== true && (
+              !currentUser.is_active && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl shadow-md mt-4 flex items-center gap-3">
                   <svg
                     className="h-6 w-6 text-red-500"
@@ -185,19 +201,19 @@ function HomeUser({ onLogout }) {
                           <span className="text-gray-700">
                             Buku{" "}
                             <b>
-                              "{borrow.buku?.title || "Judul Tidak Tersedia"}"
+                              "{borrow.book?.title || "Judul Tidak Tersedia"}"
                             </b>
-                            {borrow.tanggal_kembali
+                            {borrow.return_date
                               ? " telah dikembalikan"
                               : " sedang dipinjam"}
                           </span>
                           <div className="text-sm text-gray-500 mt-1">
-                            Dipinjam: {formatDate(borrow.tanggal_pinjam)}
-                            {borrow.tanggal_kembali && (
+                            Dipinjam: {formatDate(borrow.borrow_date)}
+                            {borrow.return_date && (
                               <span>
                                 {" "}
                                 • Dikembalikan:{" "}
-                                {formatDate(borrow.tanggal_kembali)}
+                                {formatDate(borrow.return_date)}
                               </span>
                             )}
                           </div>
