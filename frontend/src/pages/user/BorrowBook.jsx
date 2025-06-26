@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NavbarUser from '../../components/NavbarUser'
+import Footer from '../../components/Footer'
 import { BookOpenIcon, FunnelIcon, EyeIcon, MagnifyingGlassIcon, SparklesIcon } from '@heroicons/react/24/solid'
 import { booksAPI, borrowsAPI } from '../../services/api'
 import bookImg from '../../assets/react.svg'
@@ -379,6 +380,7 @@ function BorrowBook({ onLogout }) {
           </>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

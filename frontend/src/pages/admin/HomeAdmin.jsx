@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import NavbarAdmin from '../../components/NavbarAdmin'
+import Footer from '../../components/Footer'
 import { useNavigate } from 'react-router-dom'
 import { BookOpenIcon, UsersIcon, ChartBarIcon, ClipboardDocumentListIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 import { statisticsAPI } from '../../services/api'
@@ -229,6 +230,7 @@ function HomeAdmin({ onLogout }) {
           </>
         )}
       </main>
+      <Footer />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import NavbarUser from '../../components/NavbarUser'
+import Footer from '../../components/Footer'
 import { ClockIcon, BookOpenIcon } from '@heroicons/react/24/solid'
 import { borrowsAPI } from '../../services/api'
 
@@ -133,6 +134,7 @@ function BorrowHistory({ onLogout }) {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }
