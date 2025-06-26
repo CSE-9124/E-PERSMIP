@@ -3,7 +3,7 @@ import NavbarAdmin from '../../components/NavbarAdmin'
 import { PlusIcon, PencilSquareIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { usersAPI, authAPI } from '../../services/api'
 
-function UserManagement() {
+function UserManagement({ onLogout }) {
   const [users, setUsers] = useState([])
   const [filteredUsers, setFilteredUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -153,7 +153,7 @@ function UserManagement() {
         </div>
       )}
       
-      <NavbarAdmin />
+      <NavbarAdmin onLogout={onLogout} />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-red-800 mb-2">Kelola User</h1>

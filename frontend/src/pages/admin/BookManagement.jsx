@@ -6,7 +6,7 @@ import 'react-image-crop/dist/ReactCrop.css'
 import NavbarAdmin from '../../components/NavbarAdmin'
 import { booksAPI } from '../../services/api'
 
-function BookManagement() {
+function BookManagement({ onLogout }) {
   const navigate = useNavigate()
   const [books, setBooks] = useState([])
   const [filteredBooks, setFilteredBooks] = useState([])
@@ -283,7 +283,7 @@ function BookManagement() {
         </div>
       )}
       
-      <NavbarAdmin />
+      <NavbarAdmin onLogout={onLogout} />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-red-800 mb-2">Kelola Buku</h1>

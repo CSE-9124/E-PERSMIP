@@ -3,7 +3,7 @@ import NavbarAdmin from '../../components/NavbarAdmin'
 import { statisticsAPI } from '../../services/api'
 import { BookOpenIcon, UsersIcon, ClipboardDocumentListIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
 
-function Statistics() {
+function Statistics({ onLogout }) {
   const [stats, setStats] = useState({
     total_books: 0,
     total_users: 0,
@@ -98,7 +98,7 @@ function Statistics() {
         </div>
       )}
 
-      <NavbarAdmin />
+      <NavbarAdmin onLogout={onLogout} />
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-extrabold text-red-800 tracking-tight drop-shadow-sm mb-8">
           Statistik & Dashboard

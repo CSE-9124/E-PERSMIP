@@ -10,7 +10,7 @@ const navLinks = [
   { to: "/admin/borrows", label: "Kelola Peminjaman" },
 ];
 
-function NavbarAdmin() {
+function NavbarAdmin({ onLogout }) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -57,10 +57,7 @@ function NavbarAdmin() {
               Admin
             </span>
             <button
-              onClick={() => {
-                localStorage.removeItem("isLoggedIn");
-                window.location.href = "/login";
-              }}
+              onClick={onLogout}
               className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white btn-sm shadow-md font-bold px-5 py-2 rounded-xl transition-all duration-200"
             >
               Logout
@@ -103,10 +100,7 @@ function NavbarAdmin() {
                     Admin
                   </span>
                   <button
-                    onClick={() => {
-                      localStorage.removeItem("isLoggedIn");
-                      window.location.href = "/login";
-                    }}
+                    onClick={onLogout}
                     className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white font-bold px-4 py-2 rounded-xl transition-all duration-200"
                   >
                     Logout

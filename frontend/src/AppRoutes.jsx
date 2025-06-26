@@ -28,27 +28,27 @@ const AppRoutes = ({ isAuthenticated, role, setIsAuthenticated, setRole, handleL
         </RequireAuth>
       } />      <Route path="/admin/books" element={
         <RequireAuth allowedRole="admin">
-          <BookManagement />
+          <BookManagement onLogout={handleLogout} />
         </RequireAuth>
       } />
       <Route path="/admin/book/:bookId" element={
         <RequireAuth allowedRole="admin">
-          <BookDetailAdmin />
+          <BookDetailAdmin onLogout={handleLogout} />
         </RequireAuth>
       } />
       <Route path="/admin/users" element={
         <RequireAuth allowedRole="admin">
-          <UserManagement />
+          <UserManagement onLogout={handleLogout} />
         </RequireAuth>
       } />
       <Route path="/admin/statistics" element={
         <RequireAuth allowedRole="admin">
-          <Statistics />
+          <Statistics onLogout={handleLogout} />
         </RequireAuth>
       } />
       <Route path="/admin/borrows" element={
         <RequireAuth allowedRole="admin">
-          <BorrowManagement />
+          <BorrowManagement onLogout={handleLogout} />
         </RequireAuth>
       } />
       {/* User routes */}

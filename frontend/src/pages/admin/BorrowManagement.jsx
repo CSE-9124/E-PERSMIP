@@ -3,7 +3,7 @@ import NavbarAdmin from '../../components/NavbarAdmin';
 import { borrowsAPI } from '../../services/api';
 import { CheckCircleIcon, XCircleIcon, ArrowPathIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 
-function BorrowManagement() {
+function BorrowManagement({ onLogout }) {
   const [borrows, setBorrows] = useState([]);
   const [filteredBorrows, setFilteredBorrows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +83,7 @@ function BorrowManagement() {
   };
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50">
-      <NavbarAdmin />
+      <NavbarAdmin onLogout={onLogout} />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-red-800 mb-2">Kelola Peminjaman Buku</h1>
