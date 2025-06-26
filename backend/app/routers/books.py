@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Form, File, UploadFile, HTTPException
 from typing import List, Optional
+import base64
 from sqlalchemy.orm import Session
 from app import crud, schemas, dependencies, models
 
@@ -9,11 +10,20 @@ router_books = APIRouter(prefix="/api/v1/books", tags=["Books"])
 @router_books.get("/", response_model=List[schemas.Book])
 def read_books(skip: int = 0, limit: int = 20, db: Session = Depends(dependencies.get_db)):
     books = crud.get_books(db, skip=skip, limit=limit)
+    for book in books:
+        # Jika ada image_blob, konversi BLOB-nya ke base64
+        if book.image_blob:
+            encoded = base64.b64encode(book.image_blob).decode("utf-8")
+            book.image = f"data:image/jpeg;base64,{encoded}"
     return books
 
 @router_books.get("/{book_id}", response_model=schemas.Book)
 def read_book(book_id: int, db: Session = Depends(dependencies.get_db)):
     db_book = crud.get_book(db, book_id=book_id)
+    # Jika ada image_blob, konversi BLOB-nya ke base64
+    if db_book and db_book.image_blob:
+        encoded = base64.b64encode(db_book.image_blob).decode("utf-8")
+        db_book.image = f"data:image/jpeg;base64,{encoded}"
     if db_book is None:
         raise HTTPException(status_code=404, detail="Book not found")
     return db_book

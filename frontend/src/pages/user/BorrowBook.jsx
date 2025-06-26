@@ -197,11 +197,17 @@ function BorrowBook({ onLogout }) {
                     >
                       {/* Book Image */}
                       <div className="relative h-64 bg-gray-100 overflow-hidden">
-                        <img 
-                          src={book.image || bookImg} 
-                          alt={book.title} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                        />
+                        {book.image ? (
+                          <img src={book.image} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : book.image_blob ? (
+                          <img src={URL.createObjectURL(book.image_blob)} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                            <span className="text-gray-400 text-sm">No image</span>
+                          </div>
+                        )}
                         
                         {/* Availability Badge */}
                         <div className="absolute top-3 right-3">
@@ -210,7 +216,7 @@ function BorrowBook({ onLogout }) {
                               ? 'bg-green-500 text-white' 
                               : 'bg-red-500 text-white'
                           }`}>
-                            {book.amount > 0 ? `${book.amount} tersedia` : 'Habis'}
+                            {book.amount > 0 ? `${book.amount} tersedia` : 'Tidak tersedia'}
                           </span>
                         </div>
                       </div>

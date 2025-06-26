@@ -130,11 +130,15 @@ function BookDetailContent({ userType = 'user', onLogout, showBorrowButton = tru
         <div className="lg:col-span-1">
           <div className="bg-white rounded-3xl shadow-xl p-6 border border-red-100">
             <div className="aspect-[3/4] bg-gray-100 rounded-2xl overflow-hidden mb-6">
-              <img
-                src={book.image || '/placeholder-book.jpg'}
-                alt={book.title}
-                className="w-full h-full object-cover"
-              />
+              {book.image ? (
+                <img src={book.image} alt={book.title} className="w-full h-full object-cover rounded-2xl" />
+              ) : book.image_blob ? (
+                <img src={URL.createObjectURL(book.image_blob)} alt={book.title} className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-2xl">
+                  <span className="text-gray-400 text-sm">No image</span>
+                </div>
+              )}
             </div>
             
             {/* Stock Status */}

@@ -365,6 +365,8 @@ function BookManagement({ onLogout }) {
                         <div className="h-16 w-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
                           {book.image ? (
                             <img src={book.image} alt={book.title} className="h-full w-full object-cover" />
+                          ) : book.image_blob ? (
+                            <img src={URL.createObjectURL(book.image_blob)} alt={book.title} className="h-full w-full object-cover" />
                           ) : (
                             <span className="text-gray-400 text-xs">No img</span>
                           )}
@@ -433,7 +435,7 @@ function BookManagement({ onLogout }) {
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 transition-all">
             <div className="relative bg-white rounded-2xl shadow-2xl border border-red-100 w-full max-w-5xl max-h-[90vh] overflow-y-auto p-0 animate-fadeIn" 
-                 style={{aspectRatio: '3/2'}}>
+                style={{aspectRatio: '3/2'}}>
               <button
                 className="absolute top-3 right-3 text-gray-400 hover:text-red-600 transition-colors text-2xl p-1 rounded-full focus:outline-none z-10"
                 onClick={handleCloseForm}
