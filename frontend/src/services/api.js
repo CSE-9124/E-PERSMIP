@@ -74,19 +74,40 @@ export const authAPI = {
       console.error('Login error:', error);
       throw new Error(error.response?.data?.detail || 'Login failed');
     }
-  },  // Register function
-  register: async (name, nim, email, password) => {
+  },
+
+  // Register function
+  register: async (userData) => {
     try {
       const response = await api.post('/api/v1/auth/register', {
-        full_name: name,
-        nim,
-        email,
-        password,
+        full_name: userData.full_name,
+        email: userData.email,
+        password: userData.password,
+        role: userData.role,
       });
       return response.data;
     } catch (error) {
       console.error('Register error:', error);
-      throw new Error(error.response?.data?.detail || 'Registration failed');
+      
+      // Improved error handling
+      let errorMessage = 'Registration failed';
+      
+      if (error.response?.data?.detail) {
+        if (Array.isArray(error.response.data.detail)) {
+          // Handle validation errors
+          errorMessage = error.response.data.detail.map(err => err.msg || err).join(', ');
+        } else if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        } else {
+          errorMessage = JSON.stringify(error.response.data.detail);
+        }
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
     }
   },
 
@@ -310,7 +331,19 @@ export const usersAPI = {
       return response.data;
     } catch (error) {
       console.error('Get all users error:', error);
-      throw error;
+      
+      let errorMessage = 'Failed to fetch users';
+      if (error.response?.data?.detail) {
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage = error.response.data.detail.map(err => err.msg || err).join(', ');
+        } else if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
     }
   },
 
@@ -320,7 +353,19 @@ export const usersAPI = {
       return response.data;
     } catch (error) {
       console.error('Update user error:', error);
-      throw error;
+      
+      let errorMessage = 'Failed to update user';
+      if (error.response?.data?.detail) {
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage = error.response.data.detail.map(err => err.msg || err).join(', ');
+        } else if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
     }
   },
 
@@ -330,7 +375,19 @@ export const usersAPI = {
       return response.data;
     } catch (error) {
       console.error('Delete user error:', error);
-      throw error;
+      
+      let errorMessage = 'Failed to delete user';
+      if (error.response?.data?.detail) {
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage = error.response.data.detail.map(err => err.msg || err).join(', ');
+        } else if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
     }
   },
 };

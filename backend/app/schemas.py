@@ -18,6 +18,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
+    role: Optional[str] = "user"  # Default role is user, admin can override
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None

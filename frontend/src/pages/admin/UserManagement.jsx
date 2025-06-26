@@ -111,7 +111,7 @@ function UserManagement() {
         await usersAPI.updateUser(form.id, updateData)
         showNotification('User berhasil diupdate!')
       } else {
-        // Create new user
+        // Create new user - pass the form object directly
         await authAPI.register({
           full_name: form.full_name,
           email: form.email,
