@@ -52,11 +52,14 @@ def get_book(db: Session, book_id: int) -> Optional[models.Book]:
         joinedload(models.Book.categories)
     ).filter(models.Book.id == book_id).first()
 
-def get_books(db: Session, skip: int = 0, limit: int = 100) -> List[models.Book]:
+def get_books(db: Session, skip: int = 0, limit: Optional[int] = None) -> List[models.Book]:
     return db.query(models.Book).options(
         joinedload(models.Book.authors),
         joinedload(models.Book.categories)
-    ).order_by(models.Book.id.desc()).offset(skip).limit(limit).all()
+    ).order_by(models.Book.id.desc()).offset(skip).limit(limit).all() if limit else db.query(models.Book).options(
+        joinedload(models.Book.authors),
+        joinedload(models.Book.categories)
+    ).order_by(models.Book.id.desc()).offset(skip).all()
 
 def create_book(db: Session, book: schemas.BookCreate, image_blob: Optional[bytes] = None) -> models.Book:
     # 1. Menyiapkan data buku dasar

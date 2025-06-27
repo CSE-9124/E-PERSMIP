@@ -53,7 +53,7 @@ function BorrowBook({ onLogout }) {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
-  const booksPerPage = 8
+  const booksPerPage = 16
   const totalPages = Math.ceil(filteredBooks.length / booksPerPage)
   const paginatedBooks = filteredBooks.slice((currentPage - 1) * booksPerPage, currentPage * booksPerPage)
 
@@ -223,34 +223,41 @@ function BorrowBook({ onLogout }) {
 
                       {/* Book Info */}
                       <div className="p-5">
+
+                        {/* Title */}
                         <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 leading-tight">
                           {book.title}
                         </h3>
                         
-                        {book.authors?.length > 0 && (
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-1">
-                            oleh {book.authors.map(a => a.name).join(', ')}
-                          </p>
-                        )}
+                        {/* Authors */}
+                        <p className="text-gray-700 text-sm mb-3 line-clamp-1">
+                          oleh {book.authors.map(a => a.name).join(', ') || '-'}
+                        </p>
                         
                         {/* Categories */}
-                        {book.categories?.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-4">
-                            {book.categories.slice(0, 2).map(cat => (
-                              <span 
-                                key={cat.name} 
-                                className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium"
-                              >
-                                {cat.name}
-                              </span>
-                            ))}
-                            {book.categories.length > 2 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">
-                                +{book.categories.length - 2}
-                              </span>
-                            )}
-                          </div>
-                        )}
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {book.categories && book.categories.length > 0 ? (
+                            <>
+                              {book.categories.slice(0, 2).map(cat => (
+                                <span 
+                                  key={cat.name} 
+                                  className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium"
+                                >
+                                  {cat.name}
+                                </span>
+                              ))}
+                              {book.categories.length > 2 && (
+                                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
+                                  +{book.categories.length - 2}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">
+                              -
+                            </span>
+                          )}
+                        </div>
 
                         {/* Action Buttons */}
                         <div className="flex gap-2">

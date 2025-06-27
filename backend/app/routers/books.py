@@ -9,7 +9,7 @@ router_books = APIRouter(prefix="/api/v1/books", tags=["Books"])
 
 # Endpoint GET (publik)
 @router_books.get("/", response_model=List[schemas.Book])
-def read_books(skip: int = 0, limit: int = 20, db: Session = Depends(dependencies.get_db)):
+def read_books(skip: int = 0, limit: Optional[int] = None, db: Session = Depends(dependencies.get_db)):
     books = crud.get_books(db, skip=skip, limit=limit)
     for book in books:
         # Jika ada image_blob, konversi BLOB-nya ke base64

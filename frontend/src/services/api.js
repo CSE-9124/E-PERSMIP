@@ -156,7 +156,7 @@ export const authAPI = {
 export const booksAPI = {
   getAllBooks: async () => {
     try {
-      const response = await api.get('/api/v1/books?limit=20');
+      const response = await api.get('/api/v1/books');
       return response.data;
     } catch (error) {
       console.error('Get books error:', error);
