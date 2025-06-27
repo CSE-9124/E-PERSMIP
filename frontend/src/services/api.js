@@ -206,7 +206,9 @@ export const booksAPI = {
       const formData = new FormData();
       if (bookData.title) formData.append('title', bookData.title);
       if (bookData.description) formData.append('description', bookData.description);
-      if (bookData.amount) formData.append('amount', bookData.amount);
+      if (bookData.amount !== undefined && bookData.amount !== null) {
+        formData.append('amount', bookData.amount);
+      }
       if (bookData.publisher) formData.append('publisher', bookData.publisher);
       if (bookData.published_date) formData.append('published_date', bookData.published_date);
       if (bookData.image) formData.append('image', bookData.image);
