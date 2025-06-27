@@ -122,6 +122,7 @@ function BookManagement({ onLogout }) {
       setEditMode(true)
       setAuthorList(book.authors ? book.authors.map(a => a.name) : [])
       setSelectedCategory(book.categories && book.categories.length > 0 ? book.categories[0].name : '')
+      setImagePreview(book.image || null)
     } else {
       setForm({ 
         id: null, 
@@ -135,8 +136,8 @@ function BookManagement({ onLogout }) {
       setEditMode(false)
       setAuthorList([])
       setSelectedCategory('')
+      setImagePreview(null)
     }
-    setImagePreview(null)
     setShowCropModal(false)
     setCrop(undefined)
     setCompletedCrop(undefined)
@@ -601,6 +602,17 @@ function BookManagement({ onLogout }) {
                           <div className="w-full aspect-[3/4] border border-red-200 rounded-lg overflow-hidden bg-gray-50">
                             <img
                               src={URL.createObjectURL(form.image)}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      ) : imagePreview ? (
+                        <div>
+                          <p className="text-sm text-gray-600 mb-2">Preview:</p>
+                          <div className="w-full aspect-[3/4] border border-red-200 rounded-lg overflow-hidden bg-gray-50">
+                            <img
+                              src={imagePreview}
                               alt="Preview"
                               className="w-full h-full object-cover"
                             />
