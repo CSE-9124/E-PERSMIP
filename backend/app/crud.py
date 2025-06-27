@@ -90,10 +90,32 @@ def create_book(db: Session, book: schemas.BookCreate, image_blob: Optional[byte
     return db_book
 
 def update_book(db: Session, db_book: models.Book, book_in: schemas.BookUpdate, image_blob: Optional[bytes] = None) -> models.Book:
-    update_data = book_in.dict(exclude_unset=True)
+    update_data = book_in.dict(exclude_unset=True, exclude={"authors", "categories"})
     for key, value in update_data.items():
         setattr(db_book, key, value)
-    
+
+    # Update authors jika ada
+    if book_in.authors is not None:
+        author_objects = []
+        for name in book_in.authors:
+            db_author = db.query(models.Author).filter(models.Author.name == name).first()
+            if not db_author:
+                db_author = models.Author(name=name)
+                db.add(db_author)
+            author_objects.append(db_author)
+        db_book.authors = author_objects
+
+    # Update categories jika ada
+    if book_in.categories is not None:
+        category_objects = []
+        for name in book_in.categories:
+            db_category = db.query(models.Category).filter(models.Category.name == name).first()
+            if not db_category:
+                db_category = models.Category(name=name)
+                db.add(db_category)
+            category_objects.append(db_category)
+        db_book.categories = category_objects
+
     if image_blob is not None:
         db_book.image_blob = image_blob
 

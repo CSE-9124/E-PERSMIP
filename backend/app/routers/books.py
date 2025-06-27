@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Form, File, UploadFile, HTTPException
 from typing import List, Optional
 import base64
+import json
 from sqlalchemy.orm import Session
 from app import crud, schemas, dependencies, models
 
@@ -39,6 +40,8 @@ async def create_book(
     amount: int = Form(...),
     publisher: Optional[str] = Form(None),
     published_date: Optional[str] = Form(None),
+    authors: Optional[str] = Form('[]'),
+    categories: Optional[str] = Form('[]'),
     # Gambar diupload sebagai file
     image: Optional[UploadFile] = File(None)
 ):
@@ -47,14 +50,18 @@ async def create_book(
     Data dikirim sebagai multipart/form-data.
     """
     image_bytes = await image.read() if image else None
-
+    # Parse authors & categories JSON string
+    authors_list = json.loads(authors) if authors else []
+    categories_list = json.loads(categories) if categories else []
     # Buat objek Pydantic dari data form
     book_in = schemas.BookCreate(
         title=title,
         description=description,
         amount=amount,
         publisher=publisher,
-        published_date=published_date
+        published_date=published_date,
+        authors=authors_list,
+        categories=categories_list
     )
     
     return crud.create_book(db=db, book=book_in, image_blob=image_bytes)
@@ -71,6 +78,8 @@ async def update_book(
     amount: Optional[int] = Form(None),
     publisher: Optional[str] = Form(None),
     published_date: Optional[str] = Form(None),
+    authors: Optional[str] = Form('[]'),
+    categories: Optional[str] = Form('[]'),
     image: Optional[UploadFile] = File(None)
 ):
     db_book = crud.get_book(db, book_id=book_id)
@@ -78,13 +87,16 @@ async def update_book(
         raise HTTPException(status_code=404, detail="Book not found")
     
     image_bytes = await image.read() if image else None
-
+    authors_list = json.loads(authors) if authors else []
+    categories_list = json.loads(categories) if categories else []
     book_in = schemas.BookUpdate(
         title=title,
         description=description,
         amount=amount,
         publisher=publisher,
-        published_date=published_date
+        published_date=published_date,
+        authors=authors_list,
+        categories=categories_list
     )
     return crud.update_book(db, db_book=db_book, book_in=book_in, image_blob=image_bytes)
 

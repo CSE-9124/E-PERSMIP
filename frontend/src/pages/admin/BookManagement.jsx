@@ -5,6 +5,7 @@ import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 import NavbarAdmin from '../../components/NavbarAdmin'
 import { booksAPI } from '../../services/api'
+import { categoriesAPI } from '../../services/api'
 
 function BookManagement({ onLogout }) {
   const navigate = useNavigate()
@@ -38,8 +39,17 @@ function BookManagement({ onLogout }) {
   const imgRef = useRef(null)
   const previewCanvasRef = useRef(null)
 
+  // New states for categories and authors
+  const [categories, setCategories] = useState([])
+  const [authors, setAuthors] = useState([])
+  const [selectedCategories, setSelectedCategories] = useState([])
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [authorInput, setAuthorInput] = useState('')
+  const [authorList, setAuthorList] = useState([])
+
   useEffect(() => {
     fetchBooks()
+    fetchCategories()
   }, [])
 
   // Filter dan search effect
@@ -89,6 +99,15 @@ function BookManagement({ onLogout }) {
     }
   }
 
+  const fetchCategories = async () => {
+    try {
+      const data = await categoriesAPI.getAllCategories()
+      setCategories(data)
+    } catch (err) {
+      showNotification('Gagal memuat kategori', 'error')
+    }
+  }
+
   const handleOpenForm = (book = null) => {
     if (book) {
       setForm({
@@ -101,6 +120,8 @@ function BookManagement({ onLogout }) {
         image: null
       })
       setEditMode(true)
+      setAuthorList(book.authors ? book.authors.map(a => a.name) : [])
+      setSelectedCategory(book.categories && book.categories.length > 0 ? book.categories[0].name : '')
     } else {
       setForm({ 
         id: null, 
@@ -112,6 +133,8 @@ function BookManagement({ onLogout }) {
         image: null
       })
       setEditMode(false)
+      setAuthorList([])
+      setSelectedCategory('')
     }
     setImagePreview(null)
     setShowCropModal(false)
@@ -240,15 +263,44 @@ function BookManagement({ onLogout }) {
     setCompletedCrop(undefined)
   }
 
+  const handleAuthorInput = (e) => {
+    setAuthorInput(e.target.value)
+  }
+
+  const handleAuthorKeyDown = (e) => {
+    if ((e.key === 'Enter' || e.key === ',') && authorInput.trim()) {
+      e.preventDefault()
+      if (!authorList.includes(authorInput.trim())) {
+        setAuthorList([...authorList, authorInput.trim()])
+      }
+      setAuthorInput('')
+    } else if (e.key === 'Backspace' && !authorInput && authorList.length > 0) {
+      setAuthorList(authorList.slice(0, -1))
+    }
+  }
+
+  const removeAuthor = (name) => {
+    setAuthorList(authorList.filter(a => a !== name))
+  }
+
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
     try {
+      const bookData = {
+        ...form,
+        authors: authorList,
+        categories: selectedCategory ? [selectedCategory] : []
+      }
       if (editMode) {
-        await booksAPI.updateBook(form.id, form)
+        await booksAPI.updateBook(form.id, bookData)
         showNotification('Buku berhasil diupdate!')
       } else {
-        await booksAPI.createBook(form)
+        await booksAPI.createBook(bookData)
         showNotification('Buku berhasil ditambahkan!')
       }
       handleCloseForm()
@@ -481,6 +533,42 @@ function BookManagement({ onLogout }) {
                           <label className="block text-sm font-semibold mb-1 text-gray-700">Tanggal Terbit</label>
                           <input type="date" name="published_date" value={form.published_date} onChange={handleChange}
                             className="w-full border border-red-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white" />
+                        </div>
+
+                        {/* Penulis */}
+                        <div className="col-span-2">
+                          <label className="block text-sm font-semibold mb-1 text-gray-700">Penulis</label>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {authorList.map((name, idx) => (
+                              <span key={idx} className="bg-red-100 text-red-700 px-3 py-1 rounded-full flex items-center gap-1 text-sm">
+                                {name}
+                                <button type="button" className="p-1 text-red-500 hover:text-red-700" onClick={() => removeAuthor(name)}>&times;</button>
+                              </span>
+                            ))}
+                          </div>
+                          <input
+                            type="text"
+                            value={authorInput}
+                            onChange={handleAuthorInput}
+                            onKeyDown={handleAuthorKeyDown}
+                            placeholder="Ketik nama penulis lalu Enter atau koma..."
+                            className="w-full border border-red-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white placeholder-gray-300"
+                          />
+                        </div>
+
+                        {/* Kategori */}
+                        <div className="col-span-2">
+                          <label className="block text-sm font-semibold mb-1 text-gray-700">Kategori</label>
+                          <select
+                            value={selectedCategory}
+                            onChange={handleCategoryChange}
+                            className="w-full border border-red-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white"
+                          >
+                            <option value="">Pilih kategori</option>
+                            {categories.map((cat) => (
+                              <option key={cat.name} value={cat.name}>{cat.name}</option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                     </form>

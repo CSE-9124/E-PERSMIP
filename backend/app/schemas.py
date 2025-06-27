@@ -91,6 +91,8 @@ class BookUpdate(BaseModel):
     amount: Optional[int] = Field(None, ge=0)
     publisher: Optional[str] = None
     published_date: Optional[str] = None
+    authors: Optional[List[str]] = None
+    categories: Optional[List[str]] = None
 
 # Skema response, bisa menampilkan URL gambar lama
 class Book(BookBase):

@@ -181,9 +181,13 @@ export const booksAPI = {
       formData.append('description', bookData.description || '');
       formData.append('amount', bookData.amount);
       formData.append('publisher', bookData.publisher || '');
+      formData.append('published_date', bookData.published_date || '');
       if (bookData.image) {
         formData.append('image', bookData.image);
       }
+      // Tambahkan authors dan categories (kirim sebagai JSON string)
+      formData.append('authors', JSON.stringify(bookData.authors || []));
+      formData.append('categories', JSON.stringify(bookData.categories || []));
 
       const response = await api.post('/api/v1/books', formData, {
         headers: {
@@ -204,7 +208,11 @@ export const booksAPI = {
       if (bookData.description) formData.append('description', bookData.description);
       if (bookData.amount) formData.append('amount', bookData.amount);
       if (bookData.publisher) formData.append('publisher', bookData.publisher);
+      if (bookData.published_date) formData.append('published_date', bookData.published_date);
       if (bookData.image) formData.append('image', bookData.image);
+      // Tambahkan authors dan categories (kirim sebagai JSON string)
+      if (bookData.authors) formData.append('authors', JSON.stringify(bookData.authors));
+      if (bookData.categories) formData.append('categories', JSON.stringify(bookData.categories));
 
       const response = await api.put(`/api/v1/books/${bookId}`, formData, {
         headers: {
@@ -445,6 +453,13 @@ export const statisticsAPI = {
       console.error('Get popular books error:', error);
       throw error;
     }
+  },
+};
+
+export const categoriesAPI = {
+  getAllCategories: async () => {
+    const response = await api.get('/api/v1/categories');
+    return response.data;
   },
 };
 
