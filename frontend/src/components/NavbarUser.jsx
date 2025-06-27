@@ -93,9 +93,9 @@ function NavbarUser({ onLogout }) {
               <Link
                 to="/user/home"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200 ${isActive("/user/home")
-                    ? "bg-white/30 text-white font-bold"
-                    : ""
+                className={`block px-4 py-3 rounded-lg font-semibold transition-all duration-200 text-white ${isActive("/user/home")
+                    ? "bg-red-900 bg-opacity-50 text-yellow-200 hover:text-white font-bold"
+                    : " hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200"
                   }`}
               >
                 Beranda
@@ -104,8 +104,8 @@ function NavbarUser({ onLogout }) {
                 to="/user/borrow"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`block px-4 py-3 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200 ${isActive("/user/borrow")
-                    ? "bg-white/30 text-white font-bold"
-                    : ""
+                    ? "bg-red-900 bg-opacity-50 text-yellow-200 hover:text-white font-bold"
+                    : " hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200"
                   }`}
               >
                 Koleksi Buku
@@ -114,8 +114,8 @@ function NavbarUser({ onLogout }) {
                 to="/user/history"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`block px-4 py-3 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200 ${isActive("/user/history")
-                    ? "bg-white/30 text-white font-bold"
-                    : ""
+                    ? "bg-red-900 bg-opacity-50 text-yellow-200 hover:text-white font-bold"
+                    : " hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200"
                   }`}
               >
                 Riwayat Peminjaman
@@ -123,7 +123,7 @@ function NavbarUser({ onLogout }) {
 
               <div className="border-t border-white/20 pt-3 mt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-white font-semibold text-sm bg-red-900 bg-opacity-30 px-3 py-1 rounded-xl">
+                  <span className="text-yellow-200 font-semibold text-sm bg-red-900 bg-opacity-30 px-3 py-1 rounded-xl">
                     Mahasiswa
                   </span>
                   <button

@@ -42,8 +42,8 @@ function NavbarAdmin({ onLogout }) {
                 key={link.to}
                 to={link.to}
                 className={`px-4 py-2 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200 ${location.pathname === link.to
-                    ? "bg-white/30 text-white font-bold"
-                    : ""
+                    ? "bg-red-900 bg-opacity-50 text-yellow-200 hover:text-white font-bold"
+                    : "hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200"
                   }`}
               >
                 {link.label}
@@ -87,8 +87,8 @@ function NavbarAdmin({ onLogout }) {
                   to={link.to}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`block px-4 py-3 rounded-lg font-semibold transition-all duration-150 text-white/90 hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200 ${location.pathname === link.to
-                      ? "bg-white/30 text-white font-bold"
-                      : ""
+                      ? "bg-red-900 bg-opacity-50 text-yellow-200 hover:text-white font-bold"
+                      : "hover:bg-gray-200 hover:bg-opacity-20 hover:text-gray-200"
                     }`}
                 >
                   {link.label}
@@ -96,7 +96,7 @@ function NavbarAdmin({ onLogout }) {
               ))}
               <div className="border-t border-white/20 pt-3 mt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-white font-semibold text-sm bg-red-900 bg-opacity-30 px-3 py-1 rounded-xl">
+                  <span className="text-yellow-200 font-semibold text-sm bg-red-900 bg-opacity-30 px-3 py-1 rounded-xl">
                     Admin
                   </span>
                   <button
