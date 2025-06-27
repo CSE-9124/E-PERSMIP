@@ -184,62 +184,61 @@ function BookDetailContent({ userType = 'user', onLogout, showBorrowButton = tru
         <div className="lg:col-span-2">
           <div className="bg-white rounded-3xl shadow-xl p-8 border border-red-100">
             <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
-              {book.title}
+              {book.title || 'Buku Ini Tidak Memiliki Judul'}
             </h1>
 
             {/* Authors */}
-            {book.authors && book.authors.length > 0 && (
-              <div className="flex items-center gap-2 mb-6">
-                <UserIcon className="h-5 w-5 text-gray-500" />
-                <span className="text-lg text-gray-700">
-                  {book.authors.map(author => author.name).join(', ')}
-                </span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 mb-6">
+              <UserIcon className="h-5 w-5 text-gray-500" />
+              <span className="text-md text-gray-700">
+                {book.authors.map(author => author.name).join(', ') || '-'}
+              </span>
+            </div>
 
             {/* Categories */}
-            {book.categories && book.categories.length > 0 && (
-              <div className="flex items-start gap-2 mb-6">
-                <TagIcon className="h-5 w-5 text-gray-500 mt-1" />
-                <div className="flex flex-wrap gap-2">
-                  {book.categories.map(category => (
+            <div className="flex items-start gap-2 mb-6">
+              <TagIcon className="h-5 w-5 text-gray-500 mt-1" />
+              <div className="flex flex-wrap gap-2">
+                {book.categories && book.categories.length > 0 ? (
+                  book.categories.map(category => (
                     <span
                       key={category.name}
                       className="px-3 py-1 bg-gradient-to-r from-red-100 to-pink-100 text-red-700 rounded-full text-sm font-semibold border border-red-200"
                     >
                       {category.name}
                     </span>
-                  ))}
-                </div>
+                  ))
+                  ) : (
+                    <span className="text-md text-gray-700">-</span>
+                )}
               </div>
-            )}
+            </div>
 
             {/* Publisher and Date */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Penerbit</h3>
-                <p className="text-lg text-gray-900">{book.publisher || '-'}</p>
+                <p className="text-md text-gray-700">{book.publisher || '-'}</p>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Tanggal Terbit</h3>
                 <div className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5 text-gray-500" />
-                  <p className="text-lg text-gray-900">{formatDate(book.published_date)}</p>
+                  <CalendarIcon className="h-5 w-5 text-gray-700" />
+                  <p className="text-md text-gray-700">{formatDate(book.published_date)}</p>
                 </div>
               </div>
             </div>
 
             {/* Description */}
-            {book.description && (
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Deskripsi</h3>
-                <div className="prose prose-gray max-w-none">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {book.description}
-                  </p>
-                </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Deskripsi</h3>
+              <div className="prose prose-gray max-w-none">
+                <p className="text-gray-700 text-md leading-relaxed whitespace-pre-wrap">
+                  {book.description || '-'}
+                </p>
               </div>
-            )}
+            </div>
+
           </div>
         </div>
       </div>
