@@ -23,7 +23,21 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(dependencies.g
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    return crud.create_user(db=db, user=user)
+    
+    if user.nim:
+        db_nim = crud.get_user_by_nim(db, nim=user.nim)
+        if db_nim:
+            raise HTTPException(status_code=400, detail="NIM sudah digunakan oleh user lain")
+    
+    try:
+        return crud.create_user(db=db, user=user)
+    except Exception as e:
+        if "UNIQUE constraint failed: users.nim" in str(e):
+            raise HTTPException(status_code=400, detail="NIM sudah digunakan oleh user lain")
+        elif "UNIQUE constraint failed: users.email" in str(e):
+            raise HTTPException(status_code=400, detail="Email sudah digunakan oleh user lain")
+        else:
+            raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
 
 @router.get("/users/me", response_model=schemas.User)
 def read_users_me(current_user: schemas.User = Depends(dependencies.get_current_user)):
@@ -49,7 +63,16 @@ def update_user(
     db_user = crud.get_user_by_id(db, user_id=user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    return crud.update_user(db=db, db_user=db_user, user_in=user_update)
+    
+    try:
+        return crud.update_user(db=db, db_user=db_user, user_in=user_update)
+    except Exception as e:
+        if "UNIQUE constraint failed: users.nim" in str(e):
+            raise HTTPException(status_code=400, detail="NIM sudah digunakan oleh user lain")
+        elif "UNIQUE constraint failed: users.email" in str(e):
+            raise HTTPException(status_code=400, detail="Email sudah digunakan oleh user lain")
+        else:
+            raise HTTPException(status_code=500, detail=f"Error updating user: {str(e)}")
 
 @router.delete("/users/{user_id}")
 def delete_user(

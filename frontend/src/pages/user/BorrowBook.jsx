@@ -5,6 +5,7 @@ import Footer from '../../components/Footer'
 import { BookOpenIcon, FunnelIcon, EyeIcon, MagnifyingGlassIcon, SparklesIcon } from '@heroicons/react/24/solid'
 import { booksAPI, borrowsAPI } from '../../services/api'
 import bookImg from '../../assets/react.svg'
+import { showNotification } from '../../utils/notification'
 
 function BorrowBook({ onLogout }) {
   const navigate = useNavigate()
@@ -23,7 +24,7 @@ function BorrowBook({ onLogout }) {
         const data = await booksAPI.getAllBooks()
         setBooks(data)
       } catch (err) {
-        setError('Gagal memuat data buku')
+        setError('Tidak dapat memuat koleksi buku. Silakan refresh halaman atau hubungi petugas perpustakaan.')
       } finally {
         setLoading(false)
       }
@@ -61,22 +62,28 @@ function BorrowBook({ onLogout }) {
   useEffect(() => { setCurrentPage(1) }, [search, filterType])
   const handlePinjamBuku = async (book) => {
     if (book.amount <= 0) {
-      alert('Buku tidak tersedia!')
+      showNotification('Buku tidak tersedia!', 'warning')
       return
     }
     
     setBorrowing(book.id)
     try {
       await borrowsAPI.borrowBook(book.id)
-      alert(`Berhasil meminjam: ${book.title}`)
+      showNotification(`Berhasil meminjam: ${book.title}`, 'success')
       // Refresh data buku
       const updatedBooks = await booksAPI.getAllBooks()
       setBooks(updatedBooks)
     } catch (err) {
       if (err.message.includes('tidak aktif')) {
-        alert('Akun Anda tidak aktif. Silakan hubungi administrator untuk mengaktifkan akun Anda.')
+        showNotification('Akun Anda tidak aktif. Silakan hubungi administrator untuk mengaktifkan akun Anda.', 'error')
+      } else if (err.message.includes('peminjaman aktif') || err.message.includes('dipinjam')) {
+        showNotification('Anda hanya dapat meminjam 1 buku dalam 1 waktu. Kembalikan buku yang sedang dipinjam terlebih dahulu untuk meminjam buku lain.', 'warning')
+      } else if (err.message.includes('menunggu persetujuan') || err.message.includes('menunggu')) {
+        showNotification('Masih ada peminjaman yang menunggu verifikasi admin. Harap tunggu admin memverifikasi peminjaman sebelumnya.', 'info')
+      } else if (err.message.includes('tidak tersedia')) {
+        showNotification('Buku ini sedang tidak tersedia untuk dipinjam.', 'warning')
       } else {
-        alert(`Gagal meminjam buku: ${err.message}`)
+        showNotification('Anda hanya dapat meminjam 1 buku dalam 1 waktu. Pastikan tidak ada buku yang sedang dipinjam atau menunggu verifikasi admin sebelum meminjam buku baru.', 'warning')
       }
     } finally {
       setBorrowing(null)

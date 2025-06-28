@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { BookOpenIcon, UserIcon, CalendarIcon, BuildingLibraryIcon, TagIcon, ArrowLeftIcon } from '@heroicons/react/24/solid'
 import BookReviews from './BookReviews'
 import { booksAPI, borrowsAPI } from '../services/api'
+import { showNotification } from '../utils/notification'
 
 function BookDetailContent({ userType = 'user', onLogout, showBorrowButton = true, showReviews = true }) {
   const { bookId } = useParams()
@@ -10,7 +11,6 @@ function BookDetailContent({ userType = 'user', onLogout, showBorrowButton = tru
   const [book, setBook] = useState(null)
   const [loading, setLoading] = useState(true)
   const [borrowing, setBorrowing] = useState(false)
-  const [notification, setNotification] = useState(null)
 
   useEffect(() => {
     if (bookId) {
@@ -25,32 +25,30 @@ function BookDetailContent({ userType = 'user', onLogout, showBorrowButton = tru
       setBook(bookData)
     } catch (error) {
       console.error('Error fetching book:', error)
-      showNotification('Gagal memuat detail buku: ' + error.message, 'error')
+      showNotification('Tidak dapat memuat detail buku. Silakan refresh halaman atau hubungi petugas perpustakaan.', 'error')
     } finally {
       setLoading(false)
     }
-  }
-
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
   }
 
   const handleBorrowBook = async () => {
     try {
       setBorrowing(true)
       await borrowsAPI.borrowBook(bookId)
-      showNotification('Buku berhasil dipinjam!')
+      showNotification('Buku berhasil dipinjam!', 'success')
       await fetchBook()
     } catch (error) {
       console.error('Error borrowing book:', error)
-      if (
-        (error.response && error.response.status === 403) ||
-        (error.message && error.message.toLowerCase().includes('tidak aktif'))
-      ) {
-        showNotification('Akun Anda tidak aktif. Silakan hubungi administrator untuk mengaktifkan akun.', 'error')
+      if (error.message.includes('tidak aktif')) {
+        showNotification('Akun Anda tidak aktif. Silakan hubungi administrator untuk mengaktifkan akun Anda.', 'error')
+      } else if (error.message.includes('peminjaman aktif') || error.message.includes('dipinjam')) {
+        showNotification('Anda hanya dapat meminjam 1 buku dalam 1 waktu. Kembalikan buku yang sedang dipinjam terlebih dahulu untuk meminjam buku lain.', 'warning')
+      } else if (error.message.includes('menunggu persetujuan') || error.message.includes('menunggu')) {
+        showNotification('Masih ada peminjaman yang menunggu verifikasi admin. Harap tunggu admin memverifikasi peminjaman sebelumnya.', 'info')
+      } else if (error.message.includes('tidak tersedia')) {
+        showNotification('Buku ini sedang tidak tersedia untuk dipinjam.', 'warning')
       } else {
-        showNotification('Gagal meminjam buku: ' + (error.response?.data?.detail || error.message), 'error')
+        showNotification('Anda hanya dapat meminjam 1 buku dalam 1 waktu. Pastikan tidak ada buku yang sedang dipinjam atau menunggu verifikasi admin sebelum meminjam buku baru.', 'warning')
       }
     } finally {
       setBorrowing(false)
@@ -105,17 +103,6 @@ function BookDetailContent({ userType = 'user', onLogout, showBorrowButton = tru
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Notification */}
-      {notification && (
-        <div className={`fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg font-medium transition-all ${
-          notification.type === 'error' 
-            ? 'bg-red-100 border border-red-400 text-red-700' 
-            : 'bg-green-100 border border-green-400 text-green-700'
-        }`}>
-          {notification.message}
-        </div>
-      )}
-
       {/* Back Button */}
       <button
         onClick={handleBack}

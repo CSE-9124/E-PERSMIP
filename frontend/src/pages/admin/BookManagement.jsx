@@ -6,6 +6,7 @@ import 'react-image-crop/dist/ReactCrop.css'
 import NavbarAdmin from '../../components/NavbarAdmin'
 import { booksAPI } from '../../services/api'
 import { categoriesAPI } from '../../services/api'
+import { showNotification } from '../../utils/notification'
 
 function BookManagement({ onLogout }) {
   const navigate = useNavigate()
@@ -25,11 +26,14 @@ function BookManagement({ onLogout }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-  const [notification, setNotification] = useState(null)
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('')
   const [stockFilter, setStockFilter] = useState('semua')
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10) // 10 buku per halaman
   
   // Image cropping states
   const [imagePreview, setImagePreview] = useState(null)
@@ -78,11 +82,17 @@ function BookManagement({ onLogout }) {
     }
 
     setFilteredBooks(filtered)
+    setCurrentPage(1) // Reset ke halaman pertama saat filter berubah
   }, [books, searchTerm, stockFilter])
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredBooks.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentBooks = filteredBooks.slice(startIndex, endIndex)
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page)
   }
 
   const fetchBooks = async () => {
@@ -326,16 +336,6 @@ function BookManagement({ onLogout }) {
   }  
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50">
-      {notification && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-medium ${
-          notification.type === 'error' 
-            ? 'bg-red-100 border border-red-400 text-red-700' 
-            : 'bg-green-100 border border-green-400 text-green-700'
-        }`}>
-          {notification.message}
-        </div>
-      )}
-      
       <NavbarAdmin onLogout={onLogout} />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
@@ -403,16 +403,16 @@ function BookManagement({ onLogout }) {
               <table className="min-w-full" style={{minWidth: '800px'}}>
                 <thead className="bg-red-600 text-white">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Gambar</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Judul</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Penulis</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Penerbit</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Stok</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Aksi</th>
+                    <th className="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Gambar</th>
+                    <th className="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Judul</th>
+                    <th className="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Penulis</th>
+                    <th className="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Penerbit</th>
+                    <th className="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Stok</th>
+                    <th className="px-6 py-4 text-center text-sm font-bold uppercase tracking-wider">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredBooks.map((book, index) => (
+                  {currentBooks.map((book, index) => (
                     <tr key={book.id} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="h-16 w-12 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
@@ -475,6 +475,128 @@ function BookManagement({ onLogout }) {
                 </tbody>
               </table>
             </div>
+            
+            {/* Pagination */}
+            {filteredBooks.length > 0 && totalPages > 1 && (
+              <div className="flex items-center justify-between bg-white px-6 py-4 border-t border-gray-200">
+                <div className="text-sm text-gray-700">
+                  Menampilkan {startIndex + 1} - {Math.min(endIndex, filteredBooks.length)} dari {filteredBooks.length} buku
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Sebelumnya
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex gap-1">
+                    {(() => {
+                      const pageButtons = []
+                      const maxVisiblePages = 3
+                      
+                      // Always show first page
+                      if (totalPages > 0) {
+                        pageButtons.push(
+                          <button
+                            key={1}
+                            onClick={() => handlePageChange(1)}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              currentPage === 1
+                                ? 'bg-red-600 text-white'
+                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            1
+                          </button>
+                        )
+                      }
+                      
+                      // Show middle pages around current page
+                      let startPage = Math.max(2, currentPage - 1)
+                      let endPage = Math.min(totalPages - 1, currentPage + 1)
+                      
+                      // Show dots before middle section if needed
+                      if (startPage > 2) {
+                        pageButtons.push(
+                          <span key="dots-start" className="px-2 py-2 text-gray-500">
+                            ...
+                          </span>
+                        )
+                      }
+                      
+                      // Show middle pages
+                      for (let i = startPage; i <= endPage; i++) {
+                        if (i !== 1 && i !== totalPages) {
+                          pageButtons.push(
+                            <button
+                              key={i}
+                              onClick={() => handlePageChange(i)}
+                              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                currentPage === i
+                                  ? 'bg-red-600 text-white'
+                                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {i}
+                            </button>
+                          )
+                        }
+                      }
+                      
+                      // Show dots after middle section if needed
+                      if (endPage < totalPages - 1) {
+                        pageButtons.push(
+                          <span key="dots-end" className="px-2 py-2 text-gray-500">
+                            ...
+                          </span>
+                        )
+                      }
+                      
+                      // Always show last page if more than 1 page
+                      if (totalPages > 1) {
+                        pageButtons.push(
+                          <button
+                            key={totalPages}
+                            onClick={() => handlePageChange(totalPages)}
+                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              currentPage === totalPages
+                                ? 'bg-red-600 text-white'
+                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            {totalPages}
+                          </button>
+                        )
+                      }
+                      
+                      return pageButtons
+                    })()}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    Selanjutnya
+                  </button>
+                </div>
+              </div>
+            )}
+            
             {filteredBooks.length === 0 && (
               <div className="text-center py-12">
                 <div className="text-gray-400 text-lg mb-2">📚</div>

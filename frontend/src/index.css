@@ -131,3 +131,51 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* Custom notification animations */
+@keyframes notification-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@keyframes notification-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes notification-slide-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.notification-enter {
+  animation: notification-slide-in 0.3s ease-out;
+}
+
+.notification-exit {
+  animation: notification-slide-out 0.3s ease-in;
+}
+
+.notification-progress {
+  animation: notification-progress 5s linear forwards;
+}
+
+/* Enhanced shadow for notifications */
+.notification-shadow {
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+}

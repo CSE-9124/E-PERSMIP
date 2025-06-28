@@ -65,9 +65,10 @@ export const authAPI = {
       const userResponse = await api.get('/api/v1/auth/users/me');
       const user = userResponse.data;
       
-      // Ambil role langsung dari backend
+      // Simpan user info
       const role = user.role;
       localStorage.setItem('user_role', role);
+      localStorage.setItem('user_id', user.id.toString());
 
       return { user, role, token: access_token };
     } catch (error) {
@@ -382,10 +383,12 @@ export const usersAPI = {
 
   updateUser: async (userId, userData) => {
     try {
+      console.log(`Sending PUT request to: /api/v1/auth/users/${userId}`, userData)
       const response = await api.put(`/api/v1/auth/users/${userId}`, userData);
       return response.data;
     } catch (error) {
       console.error('Update user error:', error);
+      console.error('Error response:', error.response?.data);
       
       let errorMessage = 'Failed to update user';
       if (error.response?.data?.detail) {
@@ -398,7 +401,9 @@ export const usersAPI = {
         errorMessage = error.message;
       }
       
-      throw new Error(errorMessage);
+      const enhancedError = new Error(errorMessage);
+      enhancedError.response = error.response;
+      throw enhancedError;
     }
   },
 
@@ -421,6 +426,16 @@ export const usersAPI = {
       }
       
       throw new Error(errorMessage);
+    }
+  },
+
+  checkNimExists: async (nim) => {
+    try {
+      const response = await api.get(`/api/v1/auth/users/check-nim/${nim}`);
+      return response.data.exists;
+    } catch (error) {
+      console.error('Check NIM error:', error);
+      return false;
     }
   },
 };

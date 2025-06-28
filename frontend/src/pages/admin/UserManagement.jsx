@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react'
 import NavbarAdmin from '../../components/NavbarAdmin'
 import { PlusIcon, PencilSquareIcon, TrashIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { usersAPI, authAPI } from '../../services/api'
+import { showNotification } from '../../utils/notification'
 
 function UserManagement({ onLogout }) {
   const [users, setUsers] = useState([])
   const [filteredUsers, setFilteredUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ id: null, full_name: '', email: '', password: '', role: 'user', is_active: true })
+  const [form, setForm] = useState({ id: null, full_name: '', email: '', password: '', nim: '', role: 'user', is_active: true })
   const [editMode, setEditMode] = useState(false)
-  const [notification, setNotification] = useState(null)
+  const [nimError, setNimError] = useState('')
   
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,7 +44,7 @@ function UserManagement({ onLogout }) {
     // Filter by status
     if (statusFilter !== 'semua') {
       const isActive = statusFilter === 'aktif'
-      filtered = filtered.filter((user) => user.is_active === isActive)
+      filtered = filtered.filter((user) => Boolean(user.is_active) === isActive)
     }
 
     setFilteredUsers(filtered)
@@ -62,23 +63,23 @@ function UserManagement({ onLogout }) {
     }
   }
 
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
-  }
-
   const handleOpenForm = (user = null) => {
     if (user) {
       setForm({
         id: user.id,
         full_name: user.full_name,
         email: user.email,
+        nim: user.nim || '',
         role: user.role,
-        is_active: user.is_active
+        is_active: Boolean(user.is_active)
       })
       setEditMode(true)
+      // Pastikan user_id di localStorage selalu ada saat edit
+      if (user.id) {
+        localStorage.setItem('user_id', user.id.toString())
+      }
     } else {
-      setForm({ id: null, full_name: '', email: '', role: 'user', is_active: true })
+      setForm({ id: null, full_name: '', email: '', nim: '', role: 'user', is_active: true })
       setEditMode(false)
     }
     setShowForm(true)
@@ -86,8 +87,9 @@ function UserManagement({ onLogout }) {
 
   const handleCloseForm = () => {
     setShowForm(false)
-    setForm({ id: null, full_name: '', email: '', password: '', role: 'user', is_active: true })
+    setForm({ id: null, full_name: '', email: '', password: '', nim: '', role: 'user', is_active: true })
     setEditMode(false)
+    setNimError('')
   }
 
   const handleChange = (e) => {
@@ -96,35 +98,112 @@ function UserManagement({ onLogout }) {
       ...form, 
       [name]: type === 'checkbox' ? checked : value 
     })
+    
+    if (name === 'role' && value === 'admin') {
+      setForm(prevForm => ({ ...prevForm, nim: '', [name]: value }))
+      setNimError('')
+    }
+    
+    if (name === 'nim') {
+      setNimError('')
+    }
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setNimError('')
+    
+    // Cek apakah user sedang mengubah role dirinya sendiri
+    const currentUserId = localStorage.getItem('user_id')
+    const isEditingSelf = currentUserId && parseInt(currentUserId) === form.id
+    const currentUserRole = localStorage.getItem('user_role')
+    const isChangingOwnRoleToUser = isEditingSelf && form.role === 'user' && currentUserRole === 'admin'
+    
+    console.log('Debug info:', {
+      currentUserId,
+      formId: form.id,
+      isEditingSelf,
+      currentUserRole,
+      formRole: form.role,
+      isChangingOwnRoleToUser
+    })
+    
+    // Tampilkan konfirmasi jika mengubah role diri sendiri
+    if (isChangingOwnRoleToUser) {
+      const confirmed = window.confirm(
+        'Anda akan mengubah role diri sendiri dari Admin menjadi User. ' +
+        'Setelah perubahan ini, Anda akan kehilangan akses admin dan akan dialihkan ke halaman login. ' +
+        'Apakah Anda yakin ingin melanjutkan?'
+      )
+      if (!confirmed) {
+        return
+      }
+    }
+    
     try {
       if (editMode) {
-        // Update user
         const updateData = {
           full_name: form.full_name,
           role: form.role,
-          is_active: form.is_active
+          is_active: form.is_active ? 1 : 0
         }
+        
+        if (form.role === 'user') {
+          updateData.nim = form.nim
+        }
+        
+        console.log('Updating user with data:', updateData)
+        
         await usersAPI.updateUser(form.id, updateData)
         showNotification('User berhasil diupdate!')
+        
+        // Jika mengubah role diri sendiri dari admin ke user, logout
+        if (isChangingOwnRoleToUser) {
+          showNotification('Role Anda telah berubah. Anda akan dialihkan ke halaman login.', 'info')
+          handleCloseForm()
+          setTimeout(() => {
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('user_role')
+            localStorage.removeItem('user_id')
+            window.location.href = '/'
+          }, 2000)
+          return
+        }
+        
+        // Close form and refresh users list (only for normal edits)
+        handleCloseForm()
+        fetchUsers()
+        
       } else {
-        // Create new user - pass the form object directly
-        await authAPI.register({
+        const registerData = {
           full_name: form.full_name,
           email: form.email,
           password: form.password,
           role: form.role
-        })
+        }
+        
+        if (form.role === 'user' && form.nim) {
+          registerData.nim = form.nim
+        }
+        
+        console.log('Creating user with data:', registerData)
+        await authAPI.register(registerData)
         showNotification('User baru berhasil ditambahkan!')
+        
+        // Close form and refresh users list for new user creation
+        handleCloseForm()
+        fetchUsers()
       }
-      handleCloseForm()
-      fetchUsers()
     } catch (error) {
       console.error('Error saving user:', error)
-      showNotification('Gagal menyimpan user: ' + error.message, 'error')
+      const errorMsg = error.response?.data?.detail || error.message || 'Terjadi kesalahan'
+      
+      if (errorMsg.includes('NIM sudah digunakan')) {
+        setNimError('NIM ini sudah digunakan oleh user lain')
+        showNotification('NIM sudah digunakan oleh user lain', 'error')
+      } else {
+        showNotification('Gagal menyimpan user: ' + errorMsg, 'error')
+      }
     }
   }
 
@@ -143,16 +222,6 @@ function UserManagement({ onLogout }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-pink-50">
-      {notification && (
-        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg font-medium ${
-          notification.type === 'error' 
-            ? 'bg-red-100 border border-red-400 text-red-700' 
-            : 'bg-green-100 border border-green-400 text-green-700'
-        }`}>
-          {notification.message}
-        </div>
-      )}
-      
       <NavbarAdmin onLogout={onLogout} />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
@@ -230,6 +299,7 @@ function UserManagement({ onLogout }) {
                   <tr>
                     <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Nama</th>
                     <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">NIM</th>
                     <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Role</th>
                     <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Status</th>
                     <th className="px-6 py-4 text-left text-sm font-bold uppercase tracking-wider">Aksi</th>
@@ -245,6 +315,11 @@ function UserManagement({ onLogout }) {
                         <div className="text-sm text-gray-900">{user.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {user.role === 'user' && user.nim ? user.nim : user.role === 'admin' ? '-' : 'Belum diisi'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                           user.role === 'admin' 
                             ? 'bg-purple-100 text-purple-800' 
@@ -255,11 +330,11 @@ function UserManagement({ onLogout }) {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                          user.is_active 
+                          Boolean(user.is_active)
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-red-100 text-red-800'
                         }`}>
-                          {user.is_active ? 'Aktif' : 'Non-Aktif'}
+                          {Boolean(user.is_active) ? 'Aktif' : 'Non-Aktif'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -308,6 +383,11 @@ function UserManagement({ onLogout }) {
               <div className="px-8 pt-8 pb-6">
                 <h2 className="text-2xl font-extrabold mb-6 text-red-700 text-center tracking-tight">
                   {editMode ? 'Edit User' : 'Tambah User'}
+                  {editMode && parseInt(localStorage.getItem('user_id')) === form.id && (
+                    <div className="text-sm font-normal text-orange-600 mt-1">
+                      (Anda sedang mengedit profil sendiri)
+                    </div>
+                  )}
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
@@ -332,6 +412,28 @@ function UserManagement({ onLogout }) {
                         required
                         className="w-full border border-red-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white placeholder-gray-300" 
                       />
+                    </div>
+                  )}
+                  {/* Field NIM hanya untuk role user */}
+                  {form.role === 'user' && (
+                    <div>
+                      <label className="block text-sm font-semibold mb-1 text-gray-700">
+                        NIM {!editMode && <span className="text-red-500">*</span>}
+                      </label>
+                      <input 
+                        type="text" 
+                        name="nim" 
+                        value={form.nim} 
+                        onChange={handleChange} 
+                        required={!editMode && form.role === 'user'}
+                        placeholder="Masukkan NIM mahasiswa"
+                        className={`w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white placeholder-gray-300 ${
+                          nimError ? 'border-red-400' : 'border-red-100'
+                        }`}
+                      />
+                      {nimError && (
+                        <p className="text-red-500 text-xs mt-1">{nimError}</p>
+                      )}
                     </div>
                   )}
                   {!editMode && (
@@ -360,6 +462,12 @@ function UserManagement({ onLogout }) {
                         <option value="admin">Admin</option>
                         <option value="user">User</option>
                       </select>
+                      {editMode && parseInt(localStorage.getItem('user_id')) === form.id && 
+                       form.role === 'user' && localStorage.getItem('user_role') === 'admin' && (
+                        <p className="text-orange-600 text-xs mt-1">
+                          ⚠️ Mengubah role ke User akan menghapus akses admin Anda
+                        </p>
+                      )}
                     </div>
                     {editMode && (
                       <div className="flex-1">
