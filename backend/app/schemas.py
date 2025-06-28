@@ -124,7 +124,7 @@ class BorrowCreate(BorrowBase):
 class Borrow(BorrowBase):
     id: int
     user_id: int
-    borrow_date: datetime
+    borrow_date: Optional[datetime] = None # Tanggal pinjam
     return_date: Optional[datetime] = None  # Tanggal kembali
     status: str
     book: BookInList

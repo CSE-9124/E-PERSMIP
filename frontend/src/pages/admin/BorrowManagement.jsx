@@ -87,7 +87,7 @@ function BorrowManagement({ onLogout }) {
     try {
       await borrowsAPI.updateBorrowByAdmin(editModal.borrow.id, {
         status: editModal.status,
-        return_date: editModal.date,
+        return_date: editModal.status === "dikembalikan" ? editModal.date : null,
       });
       showNotification('Data peminjaman berhasil diupdate', 'success');
       closeEditModal();
@@ -205,7 +205,10 @@ function BorrowManagement({ onLogout }) {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button 
                           onClick={() => openEditModal(b)} 
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                          className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm hover:shadow-md"
+                            ${['ditolak', 'dikembalikan'].includes(b.status) ? 'bg-gray-300 hover:bg-gray-300 cursor-not-allowed' : ''}
+                          `}
+                          disabled={['ditolak', 'dikembalikan'].includes(b.status)}
                         >
                           Edit
                         </button>
@@ -375,23 +378,47 @@ function BorrowManagement({ onLogout }) {
                       onChange={handleEditChange} 
                       className="w-full border border-red-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white"
                     >
-                      <option value="menunggu">Menunggu</option>
-                      <option value="dipinjam">Dipinjam</option>
-                      <option value="dikembalikan">Dikembalikan</option>
-                      <option value="ditolak">Ditolak</option>
+                      {editModal.borrow?.status === "dipinjam" ? (
+                        <>
+                          <option value="dipinjam">Dipinjam</option>
+                          <option value="dikembalikan">Dikembalikan</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="menunggu">Menunggu</option>
+                          <option value="dipinjam">Dipinjam</option>
+                          <option value="ditolak">Ditolak</option>
+                        </>
+                      )}
                     </select>
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-gray-700">Tanggal Kembali</label>
-                    <input 
-                      type="date" 
-                      name="date" 
-                      value={editModal.date} 
-                      onChange={handleEditChange} 
-                      className="w-full border border-red-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white placeholder-gray-300" 
-                    />
-                  </div>
+                  {/* Field tanggal hanya muncul jika status dikembalikan */}
+                  {editModal.status === "dikembalikan" && (
+                    <div>
+                      <label className="block text-sm font-semibold mb-1 text-gray-700">Tanggal Dikembalikan</label>
+                      <input
+                        type="date"
+                        name="date"
+                        value={editModal.date}
+                        onChange={handleEditChange}
+                        className="w-full border border-red-100 rounded-lg px-4 py-2 text-gray-800"
+                      />
+                      <div className="text-xs text-gray-500 mt-1">Pilih tanggal pengembalian yang sesuai.</div>
+                    </div>
+                  )}
+
+                  {/* Konfirmasi jika status akan diubah ke dikembalikan/ditolak */}
+                  {(editModal.status === 'dikembalikan' || editModal.status === 'ditolak' || editModal.status === 'dipinjam') && (
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-yellow-600 font-bold">Konfirmasi:</span>
+                        <span className="text-yellow-700">
+                          Anda yakin ingin mengubah status peminjaman menjadi <b>{editModal.status}</b>? Tindakan ini tidak dapat dibatalkan.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="flex justify-end gap-2 pt-4">
                     <button 

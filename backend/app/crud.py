@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session, joinedload
 from app import models, schemas
 from typing import Optional, List
 from app.core.security import get_password_hash
+from datetime import datetime
 
 # --- User CRUD ---
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
@@ -195,18 +196,19 @@ def return_book(db: Session, borrow_id: int, user_id: int):
         db_book.amount += 1
 
     db_borrow.status = 'dikembalikan'
+    db_borrow.return_date = datetime.now()
     
     db.commit() # Simpan perubahan stok dan status peminjaman
     db.refresh(db_borrow)
     return db_borrow
 
 def get_user_borrows(db: Session, user_id: int):
-    return db.query(models.Borrow).filter(models.Borrow.user_id == user_id).all()
+    return db.query(models.Borrow).filter(models.Borrow.user_id == user_id).order_by(models.Borrow.id.desc()).all()
 
 def get_all_borrows(db: Session):
     return db.query(models.Borrow)\
         .options(joinedload(models.Borrow.borrower), joinedload(models.Borrow.book))\
-        .all()
+        .order_by(models.Borrow.id.desc()).all()
 
 def approve_borrow(db: Session, borrow_id: int):
     db_borrow = db.query(models.Borrow).filter(models.Borrow.id == borrow_id, models.Borrow.status == "menunggu").first()
@@ -242,22 +244,26 @@ def admin_update_borrow(db: Session, borrow_id: int, update_data):
     old_status = db_borrow.status
     db_borrow.status = update_data.status
     
-    # Update return_date jika ada
-    if update_data.return_date:
-        from datetime import datetime
-        db_borrow.return_date = datetime.fromisoformat(update_data.return_date)
-    
     # Jika status berubah dari dipinjam ke dikembalikan, kembalikan stok buku
     if old_status == "dipinjam" and update_data.status == "dikembalikan":
         db_book = get_book(db, book_id=db_borrow.book_id)
         if db_book:
             db_book.amount += 1
+        # Gunakan tanggal dari admin jika ada, jika tidak pakai datetime.now()
+        if hasattr(update_data, "return_date") and update_data.return_date:
+            if isinstance(update_data.return_date, str):
+                db_borrow.return_date = datetime.fromisoformat(update_data.return_date)
+            else:
+                db_borrow.return_date = update_data.return_date
+        else:
+            db_borrow.return_date = datetime.now()
     
     # Jika status berubah dari menunggu ke dipinjam, kurangi stok buku
     elif old_status == "menunggu" and update_data.status == "dipinjam":
         db_book = get_book(db, book_id=db_borrow.book_id)
         if db_book and db_book.amount > 0:
             db_book.amount -= 1
+        db_borrow.borrow_date = datetime.now()
     
     db.commit()
     db.refresh(db_borrow)

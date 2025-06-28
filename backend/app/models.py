@@ -76,7 +76,7 @@ class Borrow(Base):
     id = Column(Integer, primary_key=True)
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    borrow_date = Column(DateTime, default=datetime.utcnow)
+    borrow_date = Column(DateTime, nullable=True)
     return_date = Column(DateTime, nullable=True)  # Tanggal kembali
     status = Column(Enum("menunggu", "disetujui", "dipinjam", "dikembalikan", "ditolak", name="status_peminjaman_enum"), default="menunggu", nullable=False)
     book = relationship("Book", back_populates="borrows")

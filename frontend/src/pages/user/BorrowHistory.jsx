@@ -53,25 +53,27 @@ function BorrowHistory({ onLogout }) {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'borrowed':
-        return 'bg-yellow-100 text-yellow-700'
-      case 'returned':
-        return 'bg-green-100 text-green-700'
-      case 'overdue':
-        return 'bg-red-100 text-red-700'
+      case 'dipinjam':
+        return 'bg-green-100 text-green-800'
+      case 'dikembalikan':
+        return 'bg-purple-100 text-purple-800'
+      case 'ditolak':
+        return 'bg-red-100 text-red-800'
       default:
-        return 'bg-gray-100 text-gray-700'
+        return 'bg-yellow-100 text-yellow-800'
     }
   }
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'borrowed':
+      case 'dipinjam':
         return 'Dipinjam'
-      case 'returned':
+      case 'dikembalikan':
         return 'Dikembalikan'
-      case 'overdue':
-        return 'Terlambat'
+      case 'ditolak':
+        return 'Ditolak'
+      case 'menunggu':
+        return 'Menunggu Persetujuan'
       default:
         return status
     }
@@ -109,23 +111,18 @@ function BorrowHistory({ onLogout }) {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex-1">
                         <h3 className="font-bold text-lg text-red-700 mb-1">{borrow.book.title}</h3>
-                        <p className="text-gray-600 text-sm mb-2">Tanggal Pinjam: {formatDate(borrow.borrow_date)}</p>
+                        {/* <p className="text-gray-600 text-sm mb-2">Tanggal Pinjam: {formatDate(borrow.borrow_date)}</p> */}
+                        {(borrow.status === 'dipinjam' || borrow.status === 'dikembalikan') && (
+                          <p className="text-gray-600 text-sm mb-2">
+                            Tanggal Pinjam: {formatDate(borrow.borrow_date)
+                            } | Tanggal Kembali: {borrow.return_date ? formatDate(borrow.return_date) : 'Belum dikembalikan'}
+                          </p>
+                        )}
                         <div className="flex items-center gap-2">
                           <span className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(borrow.status)}`}>
                             {getStatusText(borrow.status)}
                           </span>
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {borrow.status === 'borrowed' && (
-                          <button
-                            className="btn btn-sm bg-green-600 text-white hover:bg-green-700"
-                            onClick={() => handleReturnBook(borrow.id)}
-                            disabled={returning === borrow.id}
-                          >
-                            {returning === borrow.id ? 'Mengembalikan...' : 'Kembalikan'}
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
