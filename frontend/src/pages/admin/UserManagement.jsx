@@ -74,10 +74,7 @@ function UserManagement({ onLogout }) {
         is_active: Boolean(user.is_active)
       })
       setEditMode(true)
-      // Pastikan user_id di localStorage selalu ada saat edit
-      if (user.id) {
-        localStorage.setItem('user_id', user.id.toString())
-      }
+      // Menghapus kode yang mengubah localStorage user_id
     } else {
       setForm({ id: null, full_name: '', email: '', nim: '', role: 'user', is_active: true })
       setEditMode(false)
