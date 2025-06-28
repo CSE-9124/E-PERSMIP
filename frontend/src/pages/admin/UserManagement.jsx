@@ -74,6 +74,10 @@ function UserManagement({ onLogout }) {
         is_active: Boolean(user.is_active)
       })
       setEditMode(true)
+      // Pastikan user_id di localStorage selalu ada saat edit
+      if (user.id) {
+        localStorage.setItem('user_id', user.id.toString())
+      }
     } else {
       setForm({ id: null, full_name: '', email: '', nim: '', role: 'user', is_active: true })
       setEditMode(false)
@@ -109,6 +113,33 @@ function UserManagement({ onLogout }) {
     e.preventDefault()
     setNimError('')
     
+    // Cek apakah user sedang mengubah role dirinya sendiri
+    const currentUserId = localStorage.getItem('user_id')
+    const isEditingSelf = currentUserId && parseInt(currentUserId) === form.id
+    const currentUserRole = localStorage.getItem('user_role')
+    const isChangingOwnRoleToUser = isEditingSelf && form.role === 'user' && currentUserRole === 'admin'
+    
+    console.log('Debug info:', {
+      currentUserId,
+      formId: form.id,
+      isEditingSelf,
+      currentUserRole,
+      formRole: form.role,
+      isChangingOwnRoleToUser
+    })
+    
+    // Tampilkan konfirmasi jika mengubah role diri sendiri
+    if (isChangingOwnRoleToUser) {
+      const confirmed = window.confirm(
+        'Anda akan mengubah role diri sendiri dari Admin menjadi User. ' +
+        'Setelah perubahan ini, Anda akan kehilangan akses admin dan akan dialihkan ke halaman login. ' +
+        'Apakah Anda yakin ingin melanjutkan?'
+      )
+      if (!confirmed) {
+        return
+      }
+    }
+    
     try {
       if (editMode) {
         const updateData = {
@@ -122,8 +153,27 @@ function UserManagement({ onLogout }) {
         }
         
         console.log('Updating user with data:', updateData)
+        
         await usersAPI.updateUser(form.id, updateData)
         showNotification('User berhasil diupdate!')
+        
+        // Jika mengubah role diri sendiri dari admin ke user, logout
+        if (isChangingOwnRoleToUser) {
+          showNotification('Role Anda telah berubah. Anda akan dialihkan ke halaman login.', 'info')
+          handleCloseForm()
+          setTimeout(() => {
+            localStorage.removeItem('access_token')
+            localStorage.removeItem('user_role')
+            localStorage.removeItem('user_id')
+            window.location.href = '/'
+          }, 2000)
+          return
+        }
+        
+        // Close form and refresh users list (only for normal edits)
+        handleCloseForm()
+        fetchUsers()
+        
       } else {
         const registerData = {
           full_name: form.full_name,
@@ -139,9 +189,11 @@ function UserManagement({ onLogout }) {
         console.log('Creating user with data:', registerData)
         await authAPI.register(registerData)
         showNotification('User baru berhasil ditambahkan!')
+        
+        // Close form and refresh users list for new user creation
+        handleCloseForm()
+        fetchUsers()
       }
-      handleCloseForm()
-      fetchUsers()
     } catch (error) {
       console.error('Error saving user:', error)
       const errorMsg = error.response?.data?.detail || error.message || 'Terjadi kesalahan'
@@ -331,6 +383,11 @@ function UserManagement({ onLogout }) {
               <div className="px-8 pt-8 pb-6">
                 <h2 className="text-2xl font-extrabold mb-6 text-red-700 text-center tracking-tight">
                   {editMode ? 'Edit User' : 'Tambah User'}
+                  {editMode && parseInt(localStorage.getItem('user_id')) === form.id && (
+                    <div className="text-sm font-normal text-orange-600 mt-1">
+                      (Anda sedang mengedit profil sendiri)
+                    </div>
+                  )}
                 </h2>
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
@@ -405,6 +462,12 @@ function UserManagement({ onLogout }) {
                         <option value="admin">Admin</option>
                         <option value="user">User</option>
                       </select>
+                      {editMode && parseInt(localStorage.getItem('user_id')) === form.id && 
+                       form.role === 'user' && localStorage.getItem('user_role') === 'admin' && (
+                        <p className="text-orange-600 text-xs mt-1">
+                          ⚠️ Mengubah role ke User akan menghapus akses admin Anda
+                        </p>
+                      )}
                     </div>
                     {editMode && (
                       <div className="flex-1">

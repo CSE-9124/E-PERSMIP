@@ -65,9 +65,10 @@ export const authAPI = {
       const userResponse = await api.get('/api/v1/auth/users/me');
       const user = userResponse.data;
       
-      // Ambil role langsung dari backend
+      // Simpan user info
       const role = user.role;
       localStorage.setItem('user_role', role);
+      localStorage.setItem('user_id', user.id.toString());
 
       return { user, role, token: access_token };
     } catch (error) {
