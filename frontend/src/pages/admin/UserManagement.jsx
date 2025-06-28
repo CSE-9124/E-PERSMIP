@@ -374,7 +374,7 @@ function UserManagement({ onLogout }) {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 transition-all">
             <div className="relative bg-white rounded-2xl shadow-2xl border border-red-100 w-full max-w-md p-0 animate-fadeIn">
               <button
-                className="absolute top-3 right-3 text-gray-400 hover:text-red-600 transition-colors text-2xl p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-red-200 bg-transparent hover:bg-red-50 focus:bg-red-50 active:bg-red-50"
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-600 transition-colors text-2xl px-2 pt-0 pb-[2.6px] rounded-full focus:outline-none focus:ring-2 focus:ring-red-200 bg-transparent hover:bg-red-50 hover:ring-1 hover:ring-red-200 hover:border-red-200 focus:bg-red-50 active:bg-red-50"
                 onClick={handleCloseForm}
                 aria-label="Tutup"
               >

@@ -63,12 +63,12 @@ function NavbarUser({ onLogout }) {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <span className="hidden sm:block text-yellow-200 font-semibold capitalize text-base md:text-lg bg-red-900 bg-opacity-30 px-3 py-1 rounded-xl">
+            <span className="text-yellow-200 font-semibold capitalize text-base md:text-lg bg-red-900 bg-opacity-30 px-3 py-1 rounded-xl">
               Mahasiswa
             </span>
             <button
               onClick={onLogout}
-              className="hidden sm:block bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white btn-sm shadow-md font-bold px-5 py-2 rounded-xl transition-all duration-200"
+              className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white hover:border-white btn-sm shadow-md font-bold text-base px-4 py-0 rounded-xl transition-all duration-200"
             >
               Logout
             </button>
@@ -128,7 +128,7 @@ function NavbarUser({ onLogout }) {
                   </span>
                   <button
                     onClick={onLogout}
-                    className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white font-bold px-4 py-2 verti rounded-xl transition-all duration-200"
+                    className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white font-bold px-4 py-2 vertical rounded-xl transition-all duration-200"
                   >
                     Logout
                   </button>

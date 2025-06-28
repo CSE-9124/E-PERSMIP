@@ -158,7 +158,7 @@ function HomeAdmin({ onLogout }) {
                   <div key={i} className={`rounded-lg border shadow-sm p-6 flex flex-col items-center ${stat.color}`}>
                     <div className="text-2xl mb-2">{stat.icon}</div>
                     <div className="text-3xl font-extrabold mb-1">{stat.value}</div>
-                    <div className="text-base font-semibold opacity-80">{stat.label}</div>
+                    <div className="text-base font-semibold opacity-80 text-center">{stat.label}</div>
                   </div>
                 ))}
               </div>

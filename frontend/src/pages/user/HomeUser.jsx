@@ -251,7 +251,7 @@ function HomeUser({ onLogout }) {
                         </div>
                         <button
                           onClick={() => navigate(`/user/book/${book.id}`)}
-                          className="text-green-600 hover:text-green-700 bg-gray-200 hover:border-green-600 font-semibold text-sm"
+                          className="text-green-600 border-2 bg-green-100 hover:border-2 hover:border-green-400 font-semibold text-sm transition-all duration-200"
                         >
                           Lihat Detail
                         </button>

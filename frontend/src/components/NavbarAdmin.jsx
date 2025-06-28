@@ -58,7 +58,7 @@ function NavbarAdmin({ onLogout }) {
             </span>
             <button
               onClick={onLogout}
-              className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white btn-sm shadow-md font-bold px-5 py-2 rounded-xl transition-all duration-200"
+              className="bg-white text-red-600 border border-red-600 hover:bg-red-600 hover:text-white hover:border-white btn-sm shadow-md font-bold text-base px-4 py-0 rounded-xl transition-all duration-200"
             >
               Logout
             </button>
