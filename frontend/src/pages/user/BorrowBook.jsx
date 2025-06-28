@@ -73,18 +73,14 @@ function BorrowBook({ onLogout }) {
       // Refresh data buku
       const updatedBooks = await booksAPI.getAllBooks()
       setBooks(updatedBooks)
-    } catch (err) {
-      if (err.message.includes('tidak aktif')) {
-        showNotification('Akun Anda tidak aktif. Silakan hubungi administrator untuk mengaktifkan akun Anda.', 'error')
-      } else if (err.message.includes('peminjaman aktif') || err.message.includes('dipinjam')) {
-        showNotification('Anda hanya dapat meminjam 1 buku dalam 1 waktu. Kembalikan buku yang sedang dipinjam terlebih dahulu untuk meminjam buku lain.', 'warning')
-      } else if (err.message.includes('menunggu persetujuan') || err.message.includes('menunggu')) {
-        showNotification('Masih ada peminjaman yang menunggu verifikasi admin. Harap tunggu admin memverifikasi peminjaman sebelumnya.', 'info')
-      } else if (err.message.includes('tidak tersedia')) {
-        showNotification('Buku ini sedang tidak tersedia untuk dipinjam.', 'warning')
-      } else {
-        showNotification('Anda hanya dapat meminjam 1 buku dalam 1 waktu. Pastikan tidak ada buku yang sedang dipinjam atau menunggu verifikasi admin sebelum meminjam buku baru.', 'warning')
-      }
+    } catch (error) {
+      console.error('Error borrowing book:', error)
+      // Ambil pesan error dari response backend jika ada
+      const message =
+        error?.response?.data?.detail ||
+        error?.message ||
+        'Terjadi kesalahan saat meminjam buku. Silakan coba lagi.'
+      showNotification(message, 'warning')
     } finally {
       setBorrowing(null)
     }

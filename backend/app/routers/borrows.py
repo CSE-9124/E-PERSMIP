@@ -9,7 +9,7 @@ router_borrows = APIRouter(prefix="/api/v1/borrows", tags=["Borrows"])
 def borrow_book(borrow: schemas.BorrowCreate, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.get_current_user)):
     # Check if user is active
     if not current_user.is_active:
-        raise HTTPException(status_code=403, detail="Akun Anda tidak aktif. Silakan hubungi administrator untuk mengaktifkan akun.")
+        raise HTTPException(status_code=403, detail="Akun Anda tidak aktif. Silakan hubungi administrator untuk mengaktifkan akun Anda.")
     
     result = crud.create_borrow(db=db, book_id=borrow.book_id, user_id=current_user.id)
     if isinstance(result, dict) and "error" in result:
