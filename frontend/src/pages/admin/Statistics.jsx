@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import NavbarAdmin from '../../components/NavbarAdmin'
 import { statisticsAPI } from '../../services/api'
 import { BookOpenIcon, UsersIcon, ClipboardDocumentListIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
+import { showNotification } from '../../utils/notification'
 
 function Statistics({ onLogout }) {
   const [stats, setStats] = useState({
@@ -13,7 +14,6 @@ function Statistics({ onLogout }) {
   const [monthlyData, setMonthlyData] = useState([])
   const [popularBooks, setPopularBooks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [notification, setNotification] = useState(null)
 
   useEffect(() => {
     fetchStatistics()
@@ -40,11 +40,6 @@ function Statistics({ onLogout }) {
     } finally {
       setLoading(false)
     }
-  }
-
-  const showNotification = (message, type = 'success') => {
-    setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
   }
 
   // Convert month data for chart display
@@ -87,17 +82,6 @@ function Statistics({ onLogout }) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Notification */}
-      {notification && (
-        <div className={`fixed top-4 right-4 px-4 py-3 rounded shadow-lg z-50 animate-fade-in ${
-          notification.type === 'error' 
-            ? 'bg-red-100 border border-red-400 text-red-700' 
-            : 'bg-green-100 border border-green-400 text-green-700'
-        }`}>
-          {notification.message}
-        </div>
-      )}
-
       <NavbarAdmin onLogout={onLogout} />
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-extrabold text-red-800 tracking-tight drop-shadow-sm mb-8">

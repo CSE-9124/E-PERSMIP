@@ -32,7 +32,7 @@ const Register = ({ onSwitchToLogin, onRegister, isLoading }) => {    const [for
             <div className="w-full lg:w-1/2 flex flex-col justify-center items-center bg-white py-8 px-4 min-h-screen max-h-screen overflow-auto">
                 <div className="w-full max-w-md">
                     {/* Logo Unhas */}
-                    <div className="flex justify-center mb-8">
+                    <div className="flex justify-center mb-4 mt-8">
                         <img src={unhasLogo} alt="Universitas Hasanuddin" className="h-16" />
                     </div>
                     <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">Daftar Akun</h2>

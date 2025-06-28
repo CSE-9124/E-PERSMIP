@@ -35,6 +35,8 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('user_role')
+    localStorage.removeItem('user') // Tambahkan ini untuk konsistensi
+    sessionStorage.clear()
     setIsAuthenticated(false)
     setRole('')
     navigate('/')

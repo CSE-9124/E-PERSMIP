@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import NavbarAdmin from '../../components/NavbarAdmin'
 import Footer from '../../components/Footer'
 import { useNavigate } from 'react-router-dom'
-import { BookOpenIcon, UsersIcon, ChartBarIcon, ClipboardDocumentListIcon, ArrowPathIcon, CheckCircleIcon } from '@heroicons/react/24/solid'
+import { BookOpenIcon, UsersIcon, ChartBarIcon, ClipboardDocumentListIcon, ArrowPathIcon, CheckCircleIcon, ClockIcon, XCircleIcon } from '@heroicons/react/24/solid'
 import { statisticsAPI } from '../../services/api'
 import unhasLogo from '../../assets/unhas-logo.png'
 
@@ -12,7 +12,10 @@ function HomeAdmin({ onLogout }) {
     total_books: 0,
     total_users: 0,
     total_borrows: 0,
-    active_borrows: 0
+    pending_borrows: 0,
+    active_borrows: 0,
+    returned_borrows: 0,
+    rejected_borrows: 0
   })
   const [monthlyData, setMonthlyData] = useState([])
   const [popularBooks, setPopularBooks] = useState([])
@@ -59,7 +62,7 @@ function HomeAdmin({ onLogout }) {
 
   const statsConfig = [
     { 
-      label: 'Total Buku', 
+      label: 'Total Koleksi Buku', 
       value: stats.total_books, 
       color: 'bg-red-100 text-red-700 border-red-200',
       icon: <BookOpenIcon className="h-7 w-7" />
@@ -71,16 +74,28 @@ function HomeAdmin({ onLogout }) {
       icon: <UsersIcon className="h-7 w-7" />
     },
     { 
-      label: 'Total Peminjaman', 
-      value: stats.total_borrows, 
+      label: 'Menunggu Persetujuan', 
+      value: stats.pending_borrows, 
       color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-      icon: <ClipboardDocumentListIcon className="h-7 w-7" />
+      icon: <ClockIcon className="h-7 w-7" />
     },
     { 
-      label: 'Peminjaman Aktif', 
+      label: 'Sedang Dipinjam', 
       value: stats.active_borrows, 
       color: 'bg-green-100 text-green-700 border-green-200',
       icon: <ArrowPathIcon className="h-7 w-7" />
+    },
+    { 
+      label: 'Sudah Dikembalikan', 
+      value: stats.returned_borrows, 
+      color: 'bg-purple-100 text-purple-700 border-purple-200',
+      icon: <CheckCircleIcon className="h-7 w-7" />
+    },
+    { 
+      label: 'Ditolak', 
+      value: stats.rejected_borrows, 
+      color: 'bg-red-100 text-red-800 border-red-300',
+      icon: <XCircleIcon className="h-7 w-7" />
     },
   ]
   
@@ -136,9 +151,9 @@ function HomeAdmin({ onLogout }) {
             <div className="mb-10">
               <h3 className="text-2xl font-bold mb-6 text-red-700 flex items-center gap-2">
                 <ChartBarIcon className="h-8 w-8" />
-                Statistik Perpustakaan
+                Ringkasan Aktivitas
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
                 {statsConfig.map((stat, i) => (
                   <div key={i} className={`rounded-lg border shadow-sm p-6 flex flex-col items-center ${stat.color}`}>
                     <div className="text-2xl mb-2">{stat.icon}</div>
@@ -206,27 +221,7 @@ function HomeAdmin({ onLogout }) {
               </div>
             </div>
 
-            {/* Additional Stats */}
-            <div className="bg-white/90 rounded-2xl shadow-xl border border-red-100 p-6">
-              <h2 className="text-xl font-bold text-red-700 mb-6">Ringkasan Aktivitas</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <BookOpenIcon className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                  <div className="text-2xl font-bold text-blue-600">{stats.total_books}</div>
-                  <div className="text-sm text-gray-600">Total Koleksi Buku</div>
-                </div>
-                <div className="text-center">
-                  <ArrowPathIcon className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                  <div className="text-2xl font-bold text-green-600">{stats.active_borrows}</div>
-                  <div className="text-sm text-gray-600">Sedang Dipinjam</div>
-                </div>
-                <div className="text-center">
-                  <CheckCircleIcon className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                  <div className="text-2xl font-bold text-purple-600">{stats.total_borrows - stats.active_borrows}</div>
-                  <div className="text-sm text-gray-600">Sudah Dikembalikan</div>
-                </div>
-              </div>
-            </div>
+            {/* Additional Stats - REMOVED: Duplicate section */}
           </>
         )}
       </main>

@@ -3,6 +3,7 @@ import NavbarUser from '../../components/NavbarUser'
 import Footer from '../../components/Footer'
 import { ClockIcon, BookOpenIcon } from '@heroicons/react/24/solid'
 import { borrowsAPI } from '../../services/api'
+import { showNotification } from '../../utils/notification'
 
 function BorrowHistory({ onLogout }) {
   const [borrows, setBorrows] = useState([])
@@ -18,7 +19,7 @@ function BorrowHistory({ onLogout }) {
         const data = await borrowsAPI.getMyBorrows()
         setBorrows(data)
       } catch (err) {
-        setError('Gagal memuat riwayat peminjaman')
+        setError('Tidak dapat memuat riwayat peminjaman. Silakan refresh halaman atau hubungi administrator.')
       } finally {
         setLoading(false)
       }
@@ -30,12 +31,12 @@ function BorrowHistory({ onLogout }) {
     setReturning(borrowId)
     try {
       await borrowsAPI.returnBook(borrowId)
-      alert('Buku berhasil dikembalikan!')
+      showNotification('Buku berhasil dikembalikan! Terima kasih telah mengembalikan tepat waktu.', 'success')
       // Refresh data
       const updatedBorrows = await borrowsAPI.getMyBorrows()
       setBorrows(updatedBorrows)
     } catch (err) {
-      alert(`Gagal mengembalikan buku: ${err.message}`)
+      showNotification('Terjadi kesalahan saat mengembalikan buku. Silakan coba lagi atau hubungi petugas perpustakaan.', 'error')
     } finally {
       setReturning(null)
     }

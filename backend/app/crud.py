@@ -159,12 +159,14 @@ def get_reviews_for_book(db: Session, book_id: int, skip: int = 0, limit: int = 
 
 # --- Borrow CRUD ---
 def create_borrow(db: Session, book_id: int, user_id: int):
-    # Pengecekan 1: Pastikan user tidak punya pinjaman aktif lain (menunggu/disetujui/dipinjam)
-    user_active_borrow = db.query(models.Borrow).filter(
-        models.Borrow.user_id == user_id,
-        models.Borrow.status.in_(["menunggu", "disetujui", "dipinjam"])
-    ).first()
-    if user_active_borrow:
+    # Pengecekan 1: Pastikan user tidak punya pinjaman dengan status "dipinjam" atau "menunggu"
+    # Cek peminjaman terakhir user untuk buku apapun
+    user_latest_borrow = db.query(models.Borrow).filter(
+        models.Borrow.user_id == user_id
+    ).order_by(models.Borrow.id.desc()).first()
+    
+    # Jika user punya peminjaman terakhir dengan status "dipinjam" atau "menunggu", tolak
+    if user_latest_borrow and user_latest_borrow.status in ["dipinjam", "menunggu"]:
         return {"error": "user_has_active_borrow"}
 
     # Pengecekan 2: Pastikan buku ada

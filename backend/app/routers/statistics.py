@@ -18,15 +18,30 @@ def get_statistics_summary(
     
     total_borrows = db.query(func.count(models.Borrow.id)).scalar()
     
+    pending_borrows = db.query(func.count(models.Borrow.id)).filter(
+        models.Borrow.status == "menunggu"
+    ).scalar()
+    
     active_borrows = db.query(func.count(models.Borrow.id)).filter(
         models.Borrow.status == "dipinjam"
+    ).scalar()
+    
+    returned_borrows = db.query(func.count(models.Borrow.id)).filter(
+        models.Borrow.status == "dikembalikan"
+    ).scalar()
+    
+    rejected_borrows = db.query(func.count(models.Borrow.id)).filter(
+        models.Borrow.status == "ditolak"
     ).scalar()
     
     return {
         "total_books": total_books,
         "total_users": total_users,
         "total_borrows": total_borrows,
-        "active_borrows": active_borrows
+        "pending_borrows": pending_borrows,
+        "active_borrows": active_borrows,
+        "returned_borrows": returned_borrows,
+        "rejected_borrows": rejected_borrows
     }
 
 @router.get("/borrows-by-month")
