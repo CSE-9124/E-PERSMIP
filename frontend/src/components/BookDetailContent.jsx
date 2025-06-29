@@ -225,10 +225,10 @@ function BookDetailContent({ userType = 'user', onLogout, showBorrowButton = tru
         </div>
       </div>
 
-      {/* Reviews Section (only for users) */}
-      {userType === 'user' && showReviews && (
+      {/* Reviews Section (visible for both admin and user, but only user can add review) */}
+      {showReviews && (
         <div className="bg-white rounded-3xl shadow-xl p-8 border border-red-100">
-          <BookReviews bookId={bookId} />
+          <BookReviews bookId={bookId} canAddReview={userType === 'user'} />
         </div>
       )}
     </div>

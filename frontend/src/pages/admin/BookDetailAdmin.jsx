@@ -9,7 +9,7 @@ function BookDetailAdmin({ onLogout }) {
       <BookDetailContent 
         userType="admin" 
         showBorrowButton={false} 
-        showReviews={false} 
+        showReviews={true} 
       />
     </div>
   )
