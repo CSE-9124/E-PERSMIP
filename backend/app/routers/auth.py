@@ -66,6 +66,10 @@ def update_user(
     
     try:
         return crud.update_user(db=db, db_user=db_user, user_in=user_update)
+    except ValueError as e:
+        if "minimal 1 admin" in str(e):
+            raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         if "UNIQUE constraint failed: users.nim" in str(e):
             raise HTTPException(status_code=400, detail="NIM sudah digunakan oleh user lain")
@@ -83,8 +87,14 @@ def delete_user(
     db_user = crud.get_user_by_id(db, user_id=user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    crud.delete_user(db=db, user_id=user_id)
-    return {"message": "User deleted successfully"}
+    
+    try:
+        crud.delete_user(db=db, user_id=user_id)
+        return {"message": "User deleted successfully"}
+    except ValueError as e:
+        if "minimal 1 admin" in str(e):
+            raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.get('/users/check-email/{email}')
 def check_email_exists(

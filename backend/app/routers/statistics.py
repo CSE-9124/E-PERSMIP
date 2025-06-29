@@ -12,7 +12,7 @@ def get_statistics_summary(
 ):
     """Get basic statistics summary for admin dashboard"""
     
-    total_books = db.query(func.count(models.Book.id)).scalar()
+    total_books = db.query(func.count(models.Book.id)).filter(models.Book.is_deleted == False).scalar()
     
     total_users = db.query(func.count(models.User.id)).scalar()
     
@@ -77,6 +77,7 @@ def get_popular_books(
         models.Book.title,
         func.count(models.Borrow.id).label('borrow_count')
     ).filter(
+        models.Book.is_deleted == False,
         (models.Borrow.status == "dipinjam") | (models.Borrow.status == "dikembalikan")
     ).join(
         models.Borrow, models.Book.id == models.Borrow.book_id

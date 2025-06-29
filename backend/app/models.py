@@ -52,6 +52,7 @@ class Book(Base):
     publisher = Column(String, nullable=True)
     published_date = Column(String, nullable=True)
     rating = Column(Float, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)  # Soft delete
     authors = relationship("Author", secondary=book_authors_table, back_populates="books")
     categories = relationship("Category", secondary=book_categories_table, back_populates="books")
     reviews = relationship("Review", back_populates="book")
