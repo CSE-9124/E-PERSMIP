@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { StarIcon } from '@heroicons/react/24/solid'
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline'
 import { PaperAirplaneIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
-import { reviewsAPI, booksAPI, authAPI } from '../services/api'
+import { reviewsAPI, booksAPI, authAPI, borrowsAPI } from '../services/api'
 import { showNotification } from '../utils/notification'
 
 function BookReviews({ bookId, canAddReview = true }) {
@@ -10,6 +10,8 @@ function BookReviews({ bookId, canAddReview = true }) {
   const [book, setBook] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
   const [userReview, setUserReview] = useState(null)
+  const [userBorrowHistory, setUserBorrowHistory] = useState([])
+  const [canUserReview, setCanUserReview] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -29,14 +31,35 @@ function BookReviews({ bookId, canAddReview = true }) {
     try {
       setLoading(true)
       setFetchError(null)
-      const [bookData, reviewsData, userData] = await Promise.all([
+      const [bookData, reviewsData, userData, borrowsData] = await Promise.all([
         booksAPI.getBook(bookId),
         reviewsAPI.getReviewsForBook(bookId),
-        authAPI.getCurrentUser()
+        authAPI.getCurrentUser(),
+        borrowsAPI.getMyBorrows()
       ])
       setBook(bookData)
       setReviews(reviewsData)
       setCurrentUser(userData)
+      setUserBorrowHistory(borrowsData)
+      
+      // Debug: Log borrow history for this book
+      const bookBorrows = borrowsData.filter(borrow => borrow.book.id === parseInt(bookId))
+      console.log('Borrow history for book', bookId, ':', bookBorrows)
+      console.log('All borrow data:', borrowsData)
+      
+      // Check if user has borrowed this book and RETURNED it (only returned books can be reviewed)
+      const eligibleBorrow = borrowsData.find(borrow => 
+        borrow.book.id === parseInt(bookId) && 
+        borrow.status === 'dikembalikan'  // Only returned books can be reviewed
+      )
+      
+      console.log('Eligible borrow for review:', eligibleBorrow)
+      console.log('Book ID (from URL):', bookId, 'type:', typeof bookId)
+      console.log('Looking for book with ID:', parseInt(bookId))
+      
+      // User can review if they have eligible borrow history AND they are not admin
+      const isUserNotAdmin = userData.role !== 'admin'
+      setCanUserReview(!!eligibleBorrow && isUserNotAdmin)
       
       // Find user's existing review
       const existingReview = reviewsData.find(review => review.owner.id === userData.id)
@@ -46,6 +69,12 @@ function BookReviews({ bookId, canAddReview = true }) {
         setNewReview({
           review_score: existingReview.review_score,
           review_text: existingReview.review_text
+        })
+      } else {
+        // Reset newReview jika tidak ada existing review (setelah dihapus)
+        setNewReview({
+          review_score: 5,
+          review_text: ''
         })
       }
     } catch (error) {
@@ -59,7 +88,8 @@ function BookReviews({ bookId, canAddReview = true }) {
 
   const showNotification = (message, type = 'success') => {
     setNotification({ message, type })
-    setTimeout(() => setNotification(null), 3000)
+    const duration = type === 'error' ? 5000 : 3000 // Error messages stay longer
+    setTimeout(() => setNotification(null), duration)
   }
   const handleSubmitReview = async (e) => {
     e.preventDefault()
@@ -80,12 +110,45 @@ function BookReviews({ bookId, canAddReview = true }) {
     } catch (error) {
       console.error('Error saving review:', error)
       const action = isEditing ? 'memperbarui' : 'menambahkan'
-      showNotification(`Gagal ${action} review: ` + error.message, 'error')
+      
+      // Handle specific error messages
+      let errorMessage = error.message
+      if (error.response?.status === 400) {
+        const detail = error.response?.data?.detail
+        if (detail && detail.includes('borrowed')) {
+          errorMessage = 'Anda hanya dapat memberikan review setelah mengembalikan buku yang dipinjam.'
+        } else if (detail && detail.includes('already reviewed')) {
+          errorMessage = 'Anda sudah memberikan review untuk buku ini.'
+        } else {
+          errorMessage = detail || 'Tidak dapat memberikan review pada buku ini.'
+        }
+      }
+      
+      showNotification(`Gagal ${action} review: ${errorMessage}`, 'error')
     }
   }
 
   const handleEditReview = () => {
     setIsEditing(true)
+    setShowForm(true)
+  }
+
+  const handleAddNewReview = () => {
+    // Check if user can review
+    if (!canUserReview) {
+      const isAdmin = currentUser?.role === 'admin'
+      const message = isAdmin 
+        ? 'Admin tidak dapat memberikan review.' 
+        : 'Anda hanya dapat memberikan review setelah mengembalikan buku yang dipinjam.'
+      showNotification(message, 'error')
+      return
+    }
+    
+    setIsEditing(false)
+    setNewReview({
+      review_score: 5,
+      review_text: ''
+    })
     setShowForm(true)
   }
 
@@ -97,6 +160,15 @@ function BookReviews({ bookId, canAddReview = true }) {
     try {
       await reviewsAPI.deleteReview(userReview.id)
       showNotification('Review berhasil dihapus!')
+      
+      // Reset state form setelah delete
+      setShowForm(false)
+      setIsEditing(false)
+      setNewReview({
+        review_score: 5,
+        review_text: ''
+      })
+      
       await fetchBookAndReviews() // Refresh reviews
     } catch (error) {
       console.error('Error deleting review:', error)
@@ -225,22 +297,35 @@ function BookReviews({ bookId, canAddReview = true }) {
                   </>
                 ) : (
                   // Show write/cancel button if no review exists or form is showing
-                  <button
-                    onClick={showForm ? handleCancelEdit : () => setShowForm(true)}
-                    className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
-                      showForm 
-                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
-                        : 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200'
-                    }`}
-                  >
-                    {showForm ? 'Batal' : '+ Tulis Review'}
-                  </button>
+                  <div className="flex flex-col items-end gap-2">
+                    <button
+                      onClick={showForm ? handleCancelEdit : handleAddNewReview}
+                      className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
+                        showForm 
+                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                          : canUserReview
+                            ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                      disabled={!canUserReview && !showForm}
+                    >
+                      {showForm ? 'Batal' : '+ Tulis Review'}
+                    </button>
+                    {!canUserReview && !showForm && (
+                      <span className="text-xs text-gray-500 max-w-48 text-right">
+                        {currentUser?.role === 'admin' 
+                          ? 'Admin tidak dapat memberikan review' 
+                          : 'Review hanya bisa diberikan setelah buku dikembalikan'
+                        }
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             )}
           </div>
-          {/* Review Form (only if canAddReview) */}
-          {canAddReview && showForm && (
+          {/* Review Form (only if canAddReview and user can review) */}
+          {canAddReview && showForm && canUserReview && (
             <div className="border-t border-gray-100 pt-6 mt-4">
               <h4 className="text-lg font-bold text-gray-800 mb-4">
                 {isEditing ? 'Edit Review Anda' : 'Tulis Review Baru'}
@@ -299,8 +384,12 @@ function BookReviews({ bookId, canAddReview = true }) {
                 <StarOutlineIcon className="h-8 w-8 text-gray-400" />
               </div>
               <p className="text-gray-500 font-medium mb-2">Belum ada review</p>
-              {!canAddReview ? null : (
+              {!canAddReview ? null : canUserReview ? (
                 <p className="text-sm text-gray-400">Jadilah yang pertama memberikan review untuk buku ini</p>
+              ) : currentUser?.role === 'admin' ? (
+                <p className="text-sm text-gray-400">Admin tidak dapat memberikan review</p>
+              ) : (
+                <p className="text-sm text-gray-400">Review hanya bisa diberikan setelah buku dikembalikan</p>
               )}
             </div>
           ) : (
