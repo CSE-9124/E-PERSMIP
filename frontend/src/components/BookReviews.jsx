@@ -5,7 +5,7 @@ import { PaperAirplaneIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/so
 import { reviewsAPI, booksAPI, authAPI } from '../services/api'
 import { showNotification } from '../utils/notification'
 
-function BookReviews({ bookId }) {
+function BookReviews({ bookId, canAddReview = true }) {
   const [reviews, setReviews] = useState([])
   const [book, setBook] = useState(null)
   const [currentUser, setCurrentUser] = useState(null)
@@ -18,6 +18,7 @@ function BookReviews({ bookId }) {
     review_text: ''
   })
   const [notification, setNotification] = useState(null)
+  const [fetchError, setFetchError] = useState(null)
 
   useEffect(() => {
     if (bookId) {
@@ -27,6 +28,7 @@ function BookReviews({ bookId }) {
   const fetchBookAndReviews = async () => {
     try {
       setLoading(true)
+      setFetchError(null)
       const [bookData, reviewsData, userData] = await Promise.all([
         booksAPI.getBook(bookId),
         reviewsAPI.getReviewsForBook(bookId),
@@ -48,7 +50,8 @@ function BookReviews({ bookId }) {
       }
     } catch (error) {
       console.error('Error fetching book and reviews:', error)
-      showNotification('Gagal memuat data: ' + error.message, 'error')
+      setFetchError(error?.response?.data?.detail || error.message || 'Gagal memuat data review.')
+      showNotification('Gagal memuat data: ' + (error?.message || 'Unknown error'), 'error')
     } finally {
       setLoading(false)
     }
@@ -148,6 +151,16 @@ function BookReviews({ bookId }) {
       </div>
     )
   }
+  if (fetchError) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-red-600 text-3xl mb-2">⚠️</div>
+        <p className="text-red-700 font-semibold mb-2">{fetchError}</p>
+        <p className="text-gray-500">Tidak dapat menampilkan review buku ini.</p>
+      </div>
+    )
+  }
+  // Ubah: Review Statistics Card tetap tampil meski book null
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Notification */}
@@ -167,29 +180,30 @@ function BookReviews({ bookId }) {
       )}
 
       {/* Review Statistics Card */}
-      {book && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-50 to-red-100 px-6 py-4 border-b border-red-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-1">Review & Rating</h2>
-                <p className="text-sm text-gray-600">Berikan penilaian untuk buku "{book.title}"</p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-red-600">{averageRating}</div>
-                <div className="text-sm text-gray-500">dari 5.0</div>
-              </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-red-50 to-red-100 px-6 py-4 border-b border-red-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-1">Review & Rating</h2>
+              <p className="text-sm text-gray-600">Berikan penilaian untuk buku "{book ? book.title : ''}"</p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-red-600">{averageRating}</div>
+              <div className="text-sm text-gray-500">dari 5.0</div>
             </div>
           </div>
-          
-          <div className="p-6">            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                {renderStars(Math.round(averageRating))}
-                <span className="text-sm font-medium text-gray-600">
-                  {reviews.length} ulasan
-                </span>
-              </div>
-              
+        </div>
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              {renderStars(Math.round(averageRating))}
+              <span className="text-sm font-medium text-gray-600">
+                {reviews.length} ulasan
+              </span>
+            </div>
+            
+            {/* Review Action Buttons (only if canAddReview) */}
+            {canAddReview && (
               <div className="flex items-center gap-2">
                 {userReview && !showForm ? (
                   // Show edit/delete buttons if user already has a review
@@ -223,51 +237,51 @@ function BookReviews({ bookId }) {
                   </button>
                 )}
               </div>
-            </div>            {/* Review Form */}
-            {showForm && (
-              <div className="border-t border-gray-100 pt-6 mt-4">
-                <h4 className="text-lg font-bold text-gray-800 mb-4">
-                  {isEditing ? 'Edit Review Anda' : 'Tulis Review Baru'}
-                </h4>
-                <form onSubmit={handleSubmitReview} className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-semibold mb-3 text-gray-800">Berikan Rating</label>
-                    <div className="flex items-center gap-1">
-                      {renderStars(newReview.review_score, true, (rating) => 
-                        setNewReview({ ...newReview, review_score: rating })
-                      )}
-                      <span className="ml-2 text-sm font-medium text-gray-600">
-                        ({newReview.review_score}/5)
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-semibold mb-3 text-gray-800">Tulis Ulasan</label>
-                    <div className="relative">
-                      <textarea
-                        value={newReview.review_text}
-                        onChange={(e) => setNewReview({ ...newReview, review_text: e.target.value })}
-                        placeholder="Bagikan pengalaman Anda tentang buku ini..."
-                        rows={4}
-                        className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition-all duration-200 text-gray-800 bg-gray-50 placeholder-gray-400 resize-none"
-                        required
-                      />
-                      <button
-                        type="submit"
-                        className="absolute bottom-3 right-3 p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all duration-200 shadow-md"
-                        aria-label={isEditing ? "Update Review" : "Kirim Review"}
-                      >
-                        <PaperAirplaneIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
             )}
           </div>
+          {/* Review Form (only if canAddReview) */}
+          {canAddReview && showForm && (
+            <div className="border-t border-gray-100 pt-6 mt-4">
+              <h4 className="text-lg font-bold text-gray-800 mb-4">
+                {isEditing ? 'Edit Review Anda' : 'Tulis Review Baru'}
+              </h4>
+              <form onSubmit={handleSubmitReview} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold mb-3 text-gray-800">Berikan Rating</label>
+                  <div className="flex items-center gap-1">
+                    {renderStars(newReview.review_score, true, (rating) => 
+                      setNewReview({ ...newReview, review_score: rating })
+                    )}
+                    <span className="ml-2 text-sm font-medium text-gray-600">
+                      ({newReview.review_score}/5)
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-3 text-gray-800">Tulis Ulasan</label>
+                  <div className="relative">
+                    <textarea
+                      value={newReview.review_text}
+                      onChange={(e) => setNewReview({ ...newReview, review_text: e.target.value })}
+                      placeholder="Bagikan pengalaman Anda tentang buku ini..."
+                      rows={4}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 pr-12 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition-all duration-200 text-gray-800 bg-gray-50 placeholder-gray-400 resize-none"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="absolute bottom-3 right-3 p-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-all duration-200 shadow-md"
+                      aria-label={isEditing ? "Update Review" : "Kirim Review"}
+                    >
+                      <PaperAirplaneIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Reviews List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -285,7 +299,9 @@ function BookReviews({ bookId }) {
                 <StarOutlineIcon className="h-8 w-8 text-gray-400" />
               </div>
               <p className="text-gray-500 font-medium mb-2">Belum ada review</p>
-              <p className="text-sm text-gray-400">Jadilah yang pertama memberikan review untuk buku ini</p>
+              {!canAddReview ? null : (
+                <p className="text-sm text-gray-400">Jadilah yang pertama memberikan review untuk buku ini</p>
+              )}
             </div>
           ) : (
             <div className="space-y-6">
