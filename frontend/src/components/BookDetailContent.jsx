@@ -131,7 +131,7 @@ function BookDetailContent({ userType = 'user', onLogout, showBorrowButton = tru
                   : 'bg-red-100 text-red-800 border border-red-200'
               }`}>
                 <BuildingLibraryIcon className="h-4 w-4 mr-2" />
-                {book.amount > 0 ? `${book.amount} eksemplar tersedia` : 'Tidak tersedia'}
+                {book.amount > 0 ? `${book.amount} buku tersedia` : 'Tidak tersedia'}
               </span>
             </div>            {/* Borrow Button (only for users) */}
             {userType === 'user' && showBorrowButton && (
