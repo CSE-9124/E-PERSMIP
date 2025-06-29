@@ -54,6 +54,8 @@ def get_borrows_by_month(
     result = db.query(
         func.strftime('%Y-%m', models.Borrow.borrow_date).label('month'),
         func.count(models.Borrow.id).label('count')
+    ).filter(
+        (models.Borrow.status == "dipinjam") | (models.Borrow.status == "dikembalikan")
     ).group_by(
         func.strftime('%Y-%m', models.Borrow.borrow_date)
     ).order_by('month').all()
@@ -74,6 +76,8 @@ def get_popular_books(
         models.Book.id,
         models.Book.title,
         func.count(models.Borrow.id).label('borrow_count')
+    ).filter(
+        (models.Borrow.status == "dipinjam") | (models.Borrow.status == "dikembalikan")
     ).join(
         models.Borrow, models.Book.id == models.Borrow.book_id
     ).group_by(

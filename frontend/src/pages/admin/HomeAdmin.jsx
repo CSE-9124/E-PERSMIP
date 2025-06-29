@@ -57,7 +57,7 @@ function HomeAdmin({ onLogout }) {
     if (!monthStr) return ''
     const [year, month] = monthStr.split('-')
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-    return monthNames[parseInt(month) - 1] || month
+    return `${monthNames[parseInt(month) - 1] || month} ${year}`
   }
 
   const statsConfig = [
