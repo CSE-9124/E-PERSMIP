@@ -17,6 +17,10 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[models.User]:
 def get_users(db: Session, skip: int = 0, limit: int = 100) -> List[models.User]:
     return db.query(models.User).offset(skip).limit(limit).all()
 
+def get_admin_count(db: Session) -> int:
+    """Menghitung jumlah admin dalam sistem."""
+    return db.query(models.User).filter(models.User.role == "admin").count()
+
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     hashed_password = get_password_hash(user.password)
     db_user = models.User(
@@ -32,9 +36,25 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
     return db_user
 
 def update_user(db: Session, db_user: models.User, user_in: schemas.UserUpdate) -> models.User:
+    # Validasi: Jika mengubah role admin menjadi user, pastikan masih ada minimal 1 admin
+    if (hasattr(user_in, 'role') and 
+        user_in.role != "admin" and 
+        db_user.role == "admin" and 
+        get_admin_count(db) <= 1):
+        raise ValueError("Tidak dapat mengubah role admin. Sistem harus memiliki minimal 1 admin.")
+    
     update_data = user_in.dict(exclude_unset=True)
+    
+    # Jika mengubah ke admin, hapus field is_active dan nim
+    if update_data.get('role') == 'admin':
+        if 'is_active' in update_data:
+            del update_data['is_active']
+        update_data['nim'] = None
+    
+    # Apply update
     for field, value in update_data.items():
         setattr(db_user, field, value)
+    
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -42,6 +62,10 @@ def update_user(db: Session, db_user: models.User, user_in: schemas.UserUpdate) 
 def delete_user(db: Session, user_id: int):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user:
+        # Validasi: Jika menghapus admin, pastikan masih ada minimal 1 admin
+        if db_user.role == "admin" and get_admin_count(db) <= 1:
+            raise ValueError("Tidak dapat menghapus admin. Sistem harus memiliki minimal 1 admin.")
+        
         db.delete(db_user)
         db.commit()
     return db_user
@@ -51,16 +75,18 @@ def get_book(db: Session, book_id: int) -> Optional[models.Book]:
     return db.query(models.Book).options(
         joinedload(models.Book.authors),
         joinedload(models.Book.categories)
-    ).filter(models.Book.id == book_id).first()
+    ).filter(models.Book.id == book_id, models.Book.is_deleted == False).first()
 
 def get_books(db: Session, skip: int = 0, limit: Optional[int] = None) -> List[models.Book]:
-    return db.query(models.Book).options(
+    query = db.query(models.Book).options(
         joinedload(models.Book.authors),
         joinedload(models.Book.categories)
-    ).order_by(models.Book.id.desc()).offset(skip).limit(limit).all() if limit else db.query(models.Book).options(
-        joinedload(models.Book.authors),
-        joinedload(models.Book.categories)
-    ).order_by(models.Book.id.desc()).offset(skip).all()
+    ).filter(models.Book.is_deleted == False).order_by(models.Book.id.desc())
+    
+    if limit:
+        return query.offset(skip).limit(limit).all()
+    else:
+        return query.offset(skip).all()
 
 def create_book(db: Session, book: schemas.BookCreate, image_blob: Optional[bytes] = None) -> models.Book:
     # 1. Menyiapkan data buku dasar
@@ -129,10 +155,23 @@ def update_book(db: Session, db_book: models.Book, book_in: schemas.BookUpdate, 
     return db_book
 
 def delete_book(db: Session, book_id: int) -> Optional[models.Book]:
-    db_book = db.query(models.Book).filter(models.Book.id == book_id).first()
-    if db_book:
-        db.delete(db_book)
-        db.commit()
+    db_book = db.query(models.Book).filter(models.Book.id == book_id, models.Book.is_deleted == False).first()
+    if not db_book:
+        return None
+    
+    # Cek apakah ada peminjaman aktif atau pending
+    active_borrows = db.query(models.Borrow).filter(
+        models.Borrow.book_id == book_id,
+        models.Borrow.status.in_(["menunggu", "dipinjam"])
+    ).first()
+    
+    if active_borrows:
+        raise ValueError("Cannot delete book with active or pending borrows")
+    
+    # Soft delete: set is_deleted = True
+    db_book.is_deleted = True
+    db.commit()
+    db.refresh(db_book)
     return db_book
 
 # --- Review CRUD ---

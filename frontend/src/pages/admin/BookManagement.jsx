@@ -317,20 +317,29 @@ function BookManagement({ onLogout }) {
       handleCloseForm()
       await fetchBooks() // Refresh data
     } catch (err) {
-      showNotification(`Error: ${err.message}`, 'error')
+      console.error('Error saving book:', err)
+      const errorMsg = err.response?.data?.detail || err.message || 'Terjadi kesalahan'
+      showNotification(`Gagal menyimpan buku: ${errorMsg}`, 'error')
     } finally {
       setSubmitting(false)
     }
   }
 
   const handleDelete = async (id) => {
-    if (window.confirm('Yakin ingin menghapus buku ini?')) {
+    if (window.confirm('Yakin ingin menghapus buku ini? Buku yang masih dipinjam atau menunggu persetujuan tidak dapat dihapus.')) {
       try {
         await booksAPI.deleteBook(id)
         showNotification('Buku berhasil dihapus!')
         await fetchBooks() // Refresh data
       } catch (err) {
-        showNotification(`Error: ${err.message}`, 'error')
+        console.error('Error deleting book:', err)
+        const errorMsg = err.response?.data?.detail || err.message || 'Terjadi kesalahan'
+        
+        if (errorMsg.includes('Cannot delete book with active or pending borrows')) {
+          showNotification('Tidak dapat menghapus buku karena masih ada peminjaman yang sedang aktif atau menunggu persetujuan. Tunggu hingga semua peminjaman dikembalikan atau ditolak.', 'error')
+        } else {
+          showNotification(`Gagal menghapus buku: ${errorMsg}`, 'error')
+        }
       }
     }
   }  

@@ -104,9 +104,18 @@ async def update_book(
 @router_books.delete("/{book_id}", status_code=204)
 async def delete_book(book_id: int, db: Session = Depends(dependencies.get_db), current_user: models.User = Depends(dependencies.require_admin_role)):
     """
-    Menghapus buku berdasarkan ID.
+    Menghapus buku berdasarkan ID (soft delete).
+    Buku tidak dapat dihapus jika masih ada peminjaman aktif atau pending.
     """
-    db_book = crud.delete_book(db, book_id=book_id)
-    if db_book is None:
-        raise HTTPException(status_code=404, detail="Book not found")
-    return # Response 204 No Content akan otomatis dikirim
+    try:
+        db_book = crud.delete_book(db, book_id=book_id)
+        if db_book is None:
+            raise HTTPException(status_code=404, detail="Book not found")
+        return # Response 204 No Content akan otomatis dikirim
+    except ValueError as e:
+        if "Cannot delete book with active or pending borrows" in str(e):
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot delete book with active or pending borrows. Please wait until all borrows are returned or rejected."
+            )
+        raise HTTPException(status_code=400, detail=str(e))

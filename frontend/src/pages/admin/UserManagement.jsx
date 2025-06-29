@@ -41,10 +41,14 @@ function UserManagement({ onLogout }) {
       filtered = filtered.filter((user) => user.role === roleFilter)
     }
 
-    // Filter by status
+    // Filter by status (only for users, not admins)
     if (statusFilter !== 'semua') {
       const isActive = statusFilter === 'aktif'
-      filtered = filtered.filter((user) => Boolean(user.is_active) === isActive)
+      filtered = filtered.filter((user) => {
+        // Admin tidak memiliki status, jadi skip filter untuk admin
+        if (user.role === 'admin') return true
+        return Boolean(user.is_active) === isActive
+      })
     }
 
     setFilteredUsers(filtered)
@@ -141,12 +145,12 @@ function UserManagement({ onLogout }) {
       if (editMode) {
         const updateData = {
           full_name: form.full_name,
-          role: form.role,
-          is_active: form.is_active ? 1 : 0
+          role: form.role
         }
         
         if (form.role === 'user') {
           updateData.nim = form.nim
+          updateData.is_active = form.is_active ? 1 : 0
         }
         
         console.log('Updating user with data:', updateData)
@@ -195,7 +199,9 @@ function UserManagement({ onLogout }) {
       console.error('Error saving user:', error)
       const errorMsg = error.response?.data?.detail || error.message || 'Terjadi kesalahan'
       
-      if (errorMsg.includes('NIM sudah digunakan')) {
+      if (errorMsg.includes('minimal 1 admin')) {
+        showNotification('Tidak dapat mengubah role admin. Sistem harus memiliki minimal 1 admin.', 'error')
+      } else if (errorMsg.includes('NIM sudah digunakan')) {
         setNimError('NIM ini sudah digunakan oleh user lain')
         showNotification('NIM sudah digunakan oleh user lain', 'error')
       } else {
@@ -205,14 +211,27 @@ function UserManagement({ onLogout }) {
   }
 
   const handleDelete = async (userId) => {
-    if (window.confirm('Apakah Anda yakin ingin menghapus user ini?')) {
+    const userToDelete = users.find(u => u.id === userId)
+    let confirmMessage = 'Apakah Anda yakin ingin menghapus user ini?'
+    
+    if (userToDelete?.role === 'admin') {
+      confirmMessage = 'Anda akan menghapus seorang Admin. Sistem harus memiliki minimal 1 admin. Apakah Anda yakin ingin melanjutkan?'
+    }
+    
+    if (window.confirm(confirmMessage)) {
       try {
         await usersAPI.deleteUser(userId)
         showNotification('User berhasil dihapus!')
         fetchUsers()
       } catch (error) {
         console.error('Error deleting user:', error)
-        showNotification('Gagal menghapus user: ' + error.message, 'error')
+        const errorMsg = error.response?.data?.detail || error.message || 'Terjadi kesalahan'
+        
+        if (errorMsg.includes('minimal 1 admin')) {
+          showNotification('Tidak dapat menghapus admin. Sistem harus memiliki minimal 1 admin.', 'error')
+        } else {
+          showNotification('Gagal menghapus user: ' + errorMsg, 'error')
+        }
       }
     }
   }
@@ -326,13 +345,17 @@ function UserManagement({ onLogout }) {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                          Boolean(user.is_active)
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {Boolean(user.is_active) ? 'Aktif' : 'Non-Aktif'}
-                        </span>
+                        {user.role === 'admin' ? (
+                          <div className="text-sm text-gray-500">-</div>
+                        ) : (
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                            Boolean(user.is_active)
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {Boolean(user.is_active) ? 'Aktif' : 'Non-Aktif'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex gap-2">
@@ -447,41 +470,40 @@ function UserManagement({ onLogout }) {
                       />
                     </div>
                   )}
-                  <div className="flex gap-4">
-                    <div className="flex-1">
-                      <label className="block text-sm font-semibold mb-1 text-gray-700">Role</label>
-                      <select 
-                        name="role" 
-                        value={form.role} 
-                        onChange={handleChange}
-                        className="w-full border border-red-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white"
-                      >
-                        <option value="admin">Admin</option>
-                        <option value="user">User</option>
-                      </select>
-                      {editMode && parseInt(localStorage.getItem('user_id')) === form.id && 
-                       form.role === 'user' && localStorage.getItem('user_role') === 'admin' && (
-                        <p className="text-orange-600 text-xs mt-1">
-                          ⚠️ Mengubah role ke User akan menghapus akses admin Anda
-                        </p>
-                      )}
-                    </div>
-                    {editMode && (
-                      <div className="flex-1">
-                        <label className="block text-sm font-semibold mb-1 text-gray-700">Status</label>
-                        <div className="flex items-center mt-2">
-                          <input 
-                            type="checkbox" 
-                            name="is_active" 
-                            checked={form.is_active} 
-                            onChange={handleChange}
-                            className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                          />
-                          <label className="ml-2 text-gray-700">Aktif</label>
-                        </div>
-                      </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-gray-700">Role</label>
+                    <select 
+                      name="role" 
+                      value={form.role} 
+                      onChange={handleChange}
+                      className="w-full border border-red-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-300 focus:border-red-400 transition text-gray-800 bg-white"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="user">User</option>
+                    </select>
+                    {editMode && parseInt(localStorage.getItem('user_id')) === form.id && 
+                     form.role === 'user' && localStorage.getItem('user_role') === 'admin' && (
+                      <p className="text-orange-600 text-xs mt-1">
+                        ⚠️ Mengubah role ke User akan menghapus akses admin Anda
+                      </p>
                     )}
                   </div>
+                  {/* Field Status hanya untuk role user */}
+                  {form.role === 'user' && editMode && (
+                    <div>
+                      <label className="block text-sm font-semibold mb-1 text-gray-700">Status</label>
+                      <div className="flex items-center mt-2">
+                        <input 
+                          type="checkbox" 
+                          name="is_active" 
+                          checked={form.is_active} 
+                          onChange={handleChange}
+                          className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                        />
+                        <label className="ml-2 text-gray-700">Aktif</label>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex justify-end gap-2 pt-4">
                     <button 
                       type="button"
