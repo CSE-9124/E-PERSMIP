@@ -203,18 +203,18 @@ function HomeUser({ onLogout }) {
                             <b>
                               "{borrow.book?.title || "Judul Tidak Tersedia"}"
                             </b>
-                            {borrow.return_date
-                              ? " telah dikembalikan"
-                              : " sedang dipinjam"}
+                            {" " + (borrow.status === "menunggu" ? "menunggu persetujuan" : String(borrow.status)) + "."}
                           </span>
                           <div className="text-sm text-gray-500 mt-1">
-                            Dipinjam: {formatDate(borrow.borrow_date)}
-                            {borrow.return_date && (
-                              <span>
+                            {(borrow.status === "dipinjam" || borrow.status === "dikembalikan") && (
+                              <>
+                                Tanggal Pinjam: {formatDate(borrow.borrow_date)}
                                 {" "}
-                                • Dikembalikan:{" "}
-                                {formatDate(borrow.return_date)}
-                              </span>
+                                | Tanggal Kembali:{" "}
+                                {borrow.status === "dikembalikan"
+                                  ? formatDate(borrow.return_date)
+                                  : "Belum dikembalikan"}
+                              </>
                             )}
                           </div>
                         </div>
@@ -242,12 +242,12 @@ function HomeUser({ onLogout }) {
                             Buku baru <b>"{book.title}"</b> telah ditambahkan ke
                             koleksi
                           </span>
-                          {book.authors && book.authors.length > 0 && (
-                            <div className="text-sm text-gray-500 mt-1">
-                              Penulis:{" "}
-                              {book.authors.map((a) => a.name).join(", ")}
-                            </div>
-                          )}
+                          <div className="text-sm text-gray-500 mt-1">
+                            Penulis:{" "}
+                            {book.authors && book.authors.length > 0
+                              ? book.authors.map((a) => a.name).join(", ")
+                              : "-"}
+                          </div>
                         </div>
                         <button
                           onClick={() => navigate(`/user/book/${book.id}`)}
