@@ -12,7 +12,6 @@
 - 📝 **Ulasan Buku**: Pengguna dapat memberikan rating dan review pada buku.
 - 📊 **Dashboard Statistik**: Monitoring aktivitas peminjaman, statistik buku, dan pengguna.
 - 👤 **Manajemen User & Admin**: Pengelolaan data user dan admin oleh admin.
-- 🌙 **Dark/Light Mode**: Tampilan antarmuka yang dapat disesuaikan.
 - 📱 **Responsive Design**: Kompatibel di desktop, tablet, dan mobile.
 
 ---
@@ -29,7 +28,7 @@ Berikut adalah diagram relasi basis data (ERD) yang digunakan pada aplikasi E-PE
 
 Berikut adalah diagram use case utama aplikasi E-PERSMIP:
 
-![Use Case](UseCase.png)
+![Use Case](usecase.png)
 
 ---
 
@@ -58,17 +57,17 @@ Berikut adalah diagram use case utama aplikasi E-PERSMIP:
 
 Tampilan antarmuka E-PERSMIP didesain modern, minimalis, dan responsif. Berikut beberapa contoh halaman utama:
 
-### **Landing Page**: Tampilan Home E-PERSMIP
-![HomePage](readme/HomePage.png)
-
-### **Daftar Buku**: Menampilkan katalog buku dan fitur pencarian.
-![DaftarBukuPage](readme/DaftarBukuPage.png)
+### **Halaman Login**: Autentikasi user dan admin.
+![LoginPage](readme/LoginPage.png)
 
 ### **Dashboard Admin**: Statistik peminjaman, manajemen user, buku, dan kategori.
 ![AdminDashboardPage](readme/AdminDashboardPage.png)
 
-### **Halaman Login/Register**: Autentikasi user dan admin.
-![LoginPage](readme/LoginPage.png)
+### **Home Page**: Tampilan Home untuk user E-PERSMIP.
+![HomePage](readme/HomePage.png)
+
+### **Daftar Buku**: Menampilkan katalog buku dan fitur pencarian.
+![DaftarBukuPage](readme/DaftarBukuPage.png)
 
 ### **Detail Buku**: Informasi lengkap buku, ulasan, dan tombol peminjaman.
 ![DetailBuku](readme/DetailBukuPage.png)
@@ -180,4 +179,4 @@ Kontribusi, saran, dan pengembangan lebih lanjut sangat terbuka untuk meningkatk
 
 ---
 
-**Dibuat dengan ❤️ oleh Tim E-PERSMIP**
+**Dibuat oleh Tim CIC**
